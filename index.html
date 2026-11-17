@@ -25,6 +25,7 @@
 <div id="log"></div>
 <input id="typed" placeholder="Ход текстом: е два е четыре / e2e4">
 <button class="sec" id="send">Отправить текстом</button>
+<button class="sec" id="tts">Тест голоса</button>
 <small>Очки подключены к айфону → микрофон и динамик идут через них. Экран не блокируй.
 Команды: «отмена», «повтори», «заново», «короткая/длинная рокировка», «ферзь» при превращении.</small>
 
@@ -51,7 +52,7 @@ function say(text){
     const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.startsWith("ru")); if(v)u.voice=v;
     let done=false;
     const fin=()=>{if(done)return;done=true;speaking=false;res();startListening();};
-    u.onend=u.onerror=fin;
+    u.onend=fin; u.onerror=e=>{log("озвучка: "+(e.error||"ошибка"));fin();};
     setTimeout(fin,Math.max(2500,text.length*120));
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   });
@@ -131,7 +132,19 @@ function startListening(){
   if(!SR){big("Нет распознавания речи, печатай ходы");return;}
   try{rec&&rec.abort();}catch(e){}
   rec=new SR(); rec.lang="ru-RU"; rec.continuous=false; rec.interimResults=false;
-  rec.onresult=e=>{const t=e.results[e.results.length-1][0].transcript;handle(t);};
+  rec.maxAlternatives=5;
+  rec.onresult=e=>{
+    const r=e.results[e.results.length-1];
+    const alts=[...r].map(a=>a.transcript);
+    let pick=alts[0];
+    for(const a of alts){
+      const p=parse(a); if(!p)continue;
+      if(p.type!=="move"){pick=a;break;}
+      if(game.moves({verbose:true}).some(m=>m.from===p.from&&m.to===p.to)){pick=a;break;}
+    }
+    if(alts.length>1)log("  варианты: "+alts.join(" | "));
+    handle(pick);
+  };
   rec.onend=()=>{if(running&&!speaking&&!busy)setTimeout(startListening,150);};
   rec.onerror=e=>{if(e.error!=="no-speech"&&e.error!=="aborted")log("микрофон: "+e.error);if(e.error==="not-allowed"){running=false;big("Разреши микрофон в настройках Safari");}};
   try{rec.start();}catch(e){}
@@ -143,6 +156,11 @@ $("start").onclick=async()=>{
   speechSynthesis.getVoices();
   log("старт, я за "+(me==="w"?"белых":"чёрных"));
   if(game.turn()===me)botTurn(); else say("Готов. Жду ход белых");
+};
+$("tts").onclick=()=>{
+  const n=speechSynthesis.getVoices().length, ru=speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.startsWith("ru")).length;
+  log("голосов: "+n+", русских: "+ru);
+  say("Проверка звука. Раз, два, три");
 };
 $("send").onclick=()=>{const v=$("typed").value;$("typed").value="";if(v)handle(v);};
 </script>
