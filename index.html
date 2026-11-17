@@ -1,0 +1,606 @@
+  <!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+<title>Шахматы в очках</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--card2:#1c2330;--line:#2b3340;--txt:#e6edf3;--mut:#8b949e;--acc:#4f8cff;--ok:#3fb950;--warn:#e3b341;--bad:#f85149;--lt:#eed8b5;--dk:#b3875f;--sz:min(94vw,480px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:radial-gradient(900px 500px at 50% -180px,#1d2a40 0%,var(--bg) 70%);background-color:var(--bg);color:var(--txt);font:16px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;padding:max(12px,env(safe-area-inset-top)) 10px 40px}
+.wrap{max-width:520px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 10px}
+h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.2px}
+.pill{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--mut)}
+.pill .d{width:9px;height:9px;border-radius:50%;background:#555}
+.pill.listen{color:var(--txt)} .pill.listen .d{background:var(--ok);animation:pg 1.2s infinite}
+.pill.speak{color:var(--txt)} .pill.speak .d{background:var(--acc)}
+.pill.think{color:var(--txt)} .pill.think .d{background:var(--warn);animation:py .8s infinite}
+@keyframes pg{0%{box-shadow:0 0 0 0 rgba(63,185,80,.7)}100%{box-shadow:0 0 0 9px rgba(63,185,80,0)}}
+@keyframes py{0%{box-shadow:0 0 0 0 rgba(227,179,65,.7)}100%{box-shadow:0 0 0 9px rgba(227,179,65,0)}}
+.hero{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.heroTop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.lbl{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px}
+#eval{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums}
+#botMove{font-size:40px;font-weight:800;letter-spacing:1px;min-height:50px;line-height:1.2;color:#9ec1ff}
+#sub{color:var(--mut);font-size:14px}
+#heard{font-size:14px;margin-top:6px;min-height:19px;color:var(--txt)}
+#heard.err{color:#ff9b93}
+.boardWrap{position:relative;width:var(--sz);height:var(--sz);margin:0 auto 10px;border-radius:8px;overflow:hidden;box-shadow:0 12px 34px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06)}
+#board{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);width:100%;height:100%}
+.sq{position:relative;display:flex;align-items:center;justify-content:center;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.lt{background:var(--lt)} .dk{background:var(--dk)}
+.hl{position:absolute;inset:0}
+.hl.last{background:rgba(255,214,10,.40)} .hl.bot{background:rgba(79,140,255,.45)} .hl.sel{background:rgba(46,160,67,.6)}
+.hl.chk{background:radial-gradient(circle,rgba(255,30,30,1) 0,rgba(255,30,30,.45) 45%,transparent 75%)}
+.mk{position:absolute;inset:0;pointer-events:none;z-index:3}
+.mk.dot::after{content:"";position:absolute;left:50%;top:50%;width:30%;height:30%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(10,30,10,.32)}
+.mk.cap{border-radius:50%;box-shadow:inset 0 0 0 calc(var(--sz) / 8 * .09) rgba(10,30,10,.35)}
+.pc{position:relative;z-index:2;width:92%;height:92%;pointer-events:none;filter:drop-shadow(0 2px 1.5px rgba(0,0,0,.35))}
+.gl{position:relative;z-index:2;font-size:calc(var(--sz) / 8 * .8);line-height:1;font-family:"Apple Symbols","Segoe UI Symbol","DejaVu Sans",serif;pointer-events:none}
+.gl.w{color:#fff;-webkit-text-stroke:1.3px #1a1a1a} .gl.b{color:#141414;-webkit-text-stroke:.5px #000}
+.co{position:absolute;font-size:11px;font-weight:800;z-index:1;pointer-events:none}
+.co.r{left:3px;top:2px} .co.f{right:4px;bottom:1px}
+.lt .co{color:var(--dk)} .dk .co{color:var(--lt)}
+#arrow{position:absolute;inset:0;pointer-events:none;z-index:4;width:100%;height:100%}
+.row{display:flex;gap:8px;margin-bottom:8px}
+button,select,input{font:inherit;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--txt);padding:11px 12px;min-height:46px}
+button{cursor:pointer;flex:1;font-weight:600;touch-action:manipulation}
+button:active{transform:scale(.97)}
+button.pri{background:linear-gradient(180deg,#5b95ff,#3a72ee);border-color:#3a72ee}
+button.on{background:linear-gradient(180deg,#2ea043,#238636);border-color:#238636}
+button.sm{flex:0 0 auto;min-width:52px}
+input{flex:1;min-width:0}
+input::placeholder{color:#6b7480}
+#moves{display:flex;flex-wrap:wrap;gap:4px 6px;font:14px/1.6 ui-monospace,Menlo,monospace;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:8px;max-height:96px;overflow:auto;min-height:40px}
+#moves .n{color:var(--mut)} #moves .m.cur{background:var(--acc);color:#fff;border-radius:5px;padding:0 4px}
+#moves:empty::before{content:"Ходов пока нет";color:var(--mut)}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+summary{font-weight:700;cursor:pointer}
+label.set{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font-size:15px}
+label.set select{width:58%;min-height:40px;padding:8px}
+label.set input[type=checkbox]{width:24px;height:24px;min-height:0;flex:0 0 auto}
+#log{font:12px/1.45 ui-monospace,Menlo,monospace;color:var(--mut);white-space:pre-wrap;max-height:220px;overflow:auto;margin-top:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+.modal.show{display:flex}
+.modal .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;gap:8px}
+.modal button{width:72px;height:72px;padding:6px;display:flex;align-items:center;justify-content:center}
+.modal img,.modal .gl{width:58px;height:58px;font-size:52px}
+.tips{font-size:13px;color:var(--mut);line-height:1.5}
+.tips b{color:var(--txt)}
+#warn{display:none;background:#3a1d1f;border:1px solid #6e2b2f;color:#ffbcbc;border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:14px}
+.credit{font-size:11px;color:#5d6570;text-align:center;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>♟ Шахматы в очках</h1>
+    <div class="pill" id="pill"><span class="d"></span><span id="pillTxt">Голос выкл</span></div>
+  </header>
+  <div id="warn"></div>
+  <div class="hero">
+    <div class="heroTop"><span class="lbl">Ход бота</span><span id="eval"></span></div>
+    <div id="botMove">—</div>
+    <div id="sub">Загрузка…</div>
+    <div id="heard"></div>
+  </div>
+  <div class="boardWrap">
+    <div id="board"></div>
+    <svg id="arrow" viewBox="0 0 8 8"></svg>
+  </div>
+  <div class="row">
+    <button class="pri" id="mic">🎤 Включить голос</button>
+  </div>
+  <form class="row" id="form" autocomplete="off">
+    <input id="typed" placeholder="Ход: e7e5, Nf6, конь f6, е семь е пять" enterkeyhint="send" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button class="sm" type="submit">➤</button>
+  </form>
+  <div class="row">
+    <button id="undo">↶ Отмена</button>
+    <button id="flip">⇅ Повернуть</button>
+    <button id="new">＋ Новая</button>
+    <button id="test" class="sm">🔊</button>
+  </div>
+  <div id="moves"></div>
+  <details>
+    <summary>⚙️ Настройки</summary>
+    <label class="set">Бот играет за
+      <select id="sSide"><option value="w">белых</option><option value="b">чёрных</option></select></label>
+    <label class="set">Голос бота
+      <select id="sVoice"><option value="en">English: «G1, F3»</option><option value="ru">Русский: «же 1, эф 3»</option></select></label>
+    <label class="set">Называть фигуру («Knight G1, F3»)
+      <input type="checkbox" id="sPiece"></label>
+    <label class="set">Я диктую
+      <select id="sHear"><option value="ru-RU">по-русски</option><option value="en-US">по-английски (G5, knight F3)</option></select></label>
+    <label class="set">Сила движка
+      <select id="sDepth"><option value="8">лёгкий</option><option value="12">средний</option><option value="16">сильный</option><option value="18">максимум</option></select></label>
+  </details>
+  <details>
+    <summary>❓ Как говорить ходы</summary>
+    <div class="tips">
+      <b>Поле</b> = буква + цифра: «е два е четыре», «же пять», «аш семь».<br>
+      Буквы: а · бэ · цэ · дэ · е · эф · же (или джи) · аш (или ха).<br>
+      <b>Можно одно поле</b>: «е четыре» = пешка на e4, «конь эф три», «слон цэ четыре».<br>
+      <b>Рокировка</b>: «короткая рокировка» / «длинная рокировка».<br>
+      <b>Превращение</b>: «аш семь аш восемь ферзь» (по умолчанию ферзь).<br>
+      <b>Команды</b>: «отмена», «повтори», «новая», «переверни», «стоп».<br>
+      По-английски: «e2 e4», «knight f3», «castle short», «undo».<br>
+      Если поле расслышано криво (бэ/дэ/же путаются), бот сам подберёт единственный возможный ход.<br>
+      <b>Важно на iPhone</b>: держи страницу открытой, экран не блокируй. Если микрофон не работает: Настройки → Safari → Микрофон «Разрешить», и включи Siri/Диктовку.
+    </div>
+  </details>
+  <details>
+    <summary>📜 Журнал</summary>
+    <div id="log"></div>
+  </details>
+  <div class="credit">Фигуры: cburnett (lichess), CC BY-SA 3.0 · движок Stockfish</div>
+</div>
+<div class="modal" id="promo"><div class="box" id="promoBox"></div></div>
+<script>
+setTimeout(()=>{ if(!window.__ok){ const w=document.getElementById("warn"); w.style.display="block"; w.textContent="Не загрузилась шахматная библиотека. Проверь интернет и обнови страницу."; } },6000);
+</script>
+<script type="module">
+import {Chess} from "https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/esm/chess.js";
+
+/* ===== разбор речи ===== */
+const FILE = Object.create(null), RANK = Object.create(null),
+      PIECE = Object.create(null), CMD = Object.create(null);
+function add(map, spec) {
+  for (const [k, v] of Object.entries(spec))
+    for (const w of v.split(/\s+/)) if (w) map[w] = k;
+}
+add(FILE, {
+  a: "a а ай эй аа ей",
+  b: "b б бэ бе би бэй бээ бее бы bee be",
+  c: "c ц с цэ це си сэ се ци цы ce see sea si",
+  d: "d д дэ де ди дей дээ дее dee de di",
+  e: "e е э ее ээ и йе йэ ие ии ee",
+  f: "f ф эф еф эфф ефф иф аф фэ фе ef eff",
+  g: "g г ж же жэ жи жо жее гэ ге ги джи джей дж джэ гы gee jee ji",
+  h: "h х аш ашь аж ащ ах аша ха хэ хе эйч эйчь эч эш aitch eitch",
+});
+add(RANK, {
+  1: "1 один одна одно одын адин первая первый первой раз one won ван",
+  2: "2 два две второй вторая тва two to too ту",
+  3: "3 три третий третья тре трии сри фри three tree free",
+  4: "4 четыре четвертый четвертая чтыре четыри четыр фор фо four for fore",
+  5: "5 пять пятый пятая пят файв five",
+  6: "6 шесть шестой шестая шест сикс six",
+  7: "7 семь седьмой седьмая сем севен seven",
+  8: "8 восемь восьмой восьмая восем эйт eight ate",
+});
+add(PIECE, {
+  p: "пешка пешку пешкой пешки пешечка pawn",
+  n: "конь коня конем конек кон лошадь лошадка лошадку найт knight night",
+  b: "слон слона слоном офицер бишоп bishop",
+  r: "ладья ладью ладьей ладья ладя тура туру рук rook rock",
+  q: "ферзь ферзя ферзем ферз королева королеву квин queen",
+  k: "король короля королем кинг king",
+});
+add(CMD, {
+  undo: "отмена отмени отменить отменяй назад верни ошибка undo back",
+  new: "заново новая сброс рестарт new restart",
+  repeat: "повтори повторить повтор еще repeat again",
+  quit: "стоп хватит выход пауза stop pause",
+  flip: "переверни перевернуть разверни flip",
+  white: "белые белыми white",
+  black: "черные черными black",
+});
+const SOUND = { b: "dge", d: "bge", e: "bdg", g: "dbe", a: "h", h: "a", c: "", f: "" };
+const isPart = w => w in FILE || w in RANK || w in PIECE;
+const known = w => isPart(w) || w in CMD;
+function split(w, depth) {
+  if (known(w)) return [w];
+  if (depth > 3 || w.length < 2) return null;
+  for (let i = Math.min(w.length - 1, 7); i >= 1; i--) {
+    const head = w.slice(0, i);
+    if (!isPart(head)) continue;
+    const tail = split(w.slice(i), depth + 1);
+    if (tail) return [head, ...tail];
+  }
+  return null;
+}
+function tokenize(low) {
+  const t = low
+    .replace(/([a-h])x([a-h])/g, "$1 $2")
+    .replace(/[^a-zа-я0-9\s]+/g, " ")
+    .replace(/([a-zа-я])(?=[0-9])/g, "$1 ")
+    .replace(/([0-9])(?=[a-zа-я])/g, "$1 ")
+    .replace(/(^|\s)([1-8])([1-8])(?=\s|$)/g, "$1$2 $3");
+  const out = [];
+  for (const w of t.split(/\s+/)) {
+    if (!w) continue;
+    const s = split(w, 0);
+    if (s) out.push(...s); else out.push(w);
+  }
+  return out;
+}
+const ORDINARY = new Set(["раз", "for", "two", "too", "to", "won", "ate", "one", "tree", "free", "fore", "ту", "фор"]);
+function parse(text) {
+  if (!text) return null;
+  const low = String(text).toLowerCase().replace(/ё/g, "е");
+  if (/[оo0]\s*-\s*[оo0]\s*-\s*[оo0]/.test(low)) return { type: "castle", side: "long" };
+  if (/[оo0]\s*-\s*[оo0]/.test(low)) return { type: "castle", side: "short" };
+  const words = tokenize(low);
+  if (!words.length) return null;
+  if (words.some(w => w.startsWith("рокир") || w.startsWith("castl") || w === "kingside" || w === "queenside")) {
+    const long = words.some(w => w.startsWith("длин") || w === "long" || w === "queenside" || w.startsWith("ферзев"));
+    return { type: "castle", side: long ? "long" : "short" };
+  }
+  const T = words.map(w => ({ w, f: FILE[w], r: RANK[w] ? +RANK[w] : 0, p: PIECE[w], c: CMD[w] }));
+  const sqs = [];
+  for (let i = 0; i < T.length - 1; i++)
+    if (T[i].f && T[i + 1].r) { sqs.push({ f: T[i].f, r: T[i + 1].r, i }); i++; }
+  let piece = null, promo = null;
+  T.forEach((t, i) => {
+    if (!t.p) return;
+    if (!sqs.length || i < sqs[0].i) piece = piece || t.p;
+    else promo = t.p;
+  });
+  const last = sqs[sqs.length >= 2 ? 1 : 0];
+  if (promo && (!last || (last.r !== 1 && last.r !== 8) || promo === "p" || promo === "k")) {
+    piece = piece || promo; promo = null;
+  }
+  const cand = s => [s.f + s.r, ...SOUND[s.f].split("").filter(Boolean).map(f => f + s.r)];
+  if (sqs.length >= 2) return { type: "move", from: cand(sqs[0]), to: cand(sqs[1]), piece, promo };
+  if (sqs.length === 1) return { type: "to", to: cand(sqs[0]), piece, promo };
+  const c = T.find(t => t.c);
+  if (c) return { type: "cmd", name: c.c };
+  if (T.some(t => t.p || /^[1-8]$/.test(t.w) || (t.r && t.w.length >= 3 && !ORDINARY.has(t.w))))
+    return { type: "unclear" };
+  return null;
+}
+
+/* ===== приложение ===== */
+window.__ok = true;
+const $ = id => document.getElementById(id);
+const FILES = "abcdefgh";
+const FILE_RU = {a:"а",b:"бэ",c:"цэ",d:"дэ",e:"е",f:"эф",g:"же",h:"аш"};
+const PIECE_RU = {p:"пешка",n:"конь",b:"слон",r:"ладья",q:"ферзь",k:"король"};
+const PIECE_EN = {p:"pawn",n:"knight",b:"bishop",r:"rook",q:"queen",k:"king"};
+const GLYPH = {k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
+const GLYPH_OUT = {k:"♔",q:"♕",r:"♖",b:"♗",n:"♘",p:""};
+const VS = "\uFE0E";
+const S = {side:"w", voice:"en", piece:false, hear:"ru-RU", depth:"12"};
+let game = new Chess(), flipped = false, sel = null, busy = false;
+let micOn = false, speaking = false, rec = null, recActive = false, recEndCb = null;
+let lastSpoken = "", imgFail = false, lastEval = null, errStreak = 0;
+const me = () => S.side;
+const en = () => S.voice === "en";
+
+function log(s){ const l=$("log"); l.textContent += new Date().toTimeString().slice(0,8)+"  "+s+"\n";
+  if(l.textContent.length>20000) l.textContent=l.textContent.slice(-15000); l.scrollTop=l.scrollHeight; }
+function heard(s,err){ const h=$("heard"); h.textContent=s; h.classList.toggle("err",!!err); }
+function warn(s){ const w=$("warn"); w.style.display=s?"block":"none"; w.textContent=s||""; }
+function setPill(){
+  const st = busy ? "think" : speaking ? "speak" : (micOn && recActive) ? "listen" : micOn ? "idle" : "off";
+  const txt = {think:"Думаю",speak:"Говорю",listen:"Слушаю",idle:"Жду",off:"Голос выкл"}[st];
+  $("pill").className = "pill "+st; $("pillTxt").textContent = txt;
+}
+function save(){ try{ localStorage.setItem("cg_state", JSON.stringify({pgn:game.pgn(), S, flipped})); }catch(e){} }
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem("cg_state")||"null");
+    if(!s) return;
+    Object.assign(S, s.S||{}); flipped = !!s.flipped;
+    if(s.pgn){ const g=new Chess(); g.loadPgn(s.pgn); game=g; }
+  }catch(e){ game = new Chess(); }
+}
+
+function fmt(m){
+  if(m.flags.includes("k")) return "O-O" + chk(m);
+  if(m.flags.includes("q")) return "O-O-O" + chk(m);
+  return (GLYPH_OUT[m.piece] ? GLYPH_OUT[m.piece]+VS+" " : "") + m.from.toUpperCase()+" → "+m.to.toUpperCase()
+    + (m.promotion ? "="+m.promotion.toUpperCase() : "") + chk(m);
+}
+const chk = m => m.san.includes("#") ? "#" : m.san.includes("+") ? "+" : "";
+function speechFor(m){
+  let s;
+  if(m.flags.includes("k")) s = en() ? "Castle short" : "Короткая рокировка";
+  else if(m.flags.includes("q")) s = en() ? "Castle long" : "Длинная рокировка";
+  else{
+    const q = x => en() ? x.toUpperCase() : FILE_RU[x[0]]+" "+x[1];
+    s = (S.piece ? (en()?PIECE_EN:PIECE_RU)[m.piece]+" " : "") + q(m.from) + ", " + q(m.to);
+    if(m.promotion) s += ", " + (en()?PIECE_EN:PIECE_RU)[m.promotion];
+  }
+  if(m.san.includes("#")) s += en() ? ", checkmate" : ", мат";
+  else if(m.san.includes("+")) s += en() ? ", check" : ", шах";
+  return s;
+}
+function endText(ru=true){
+  if(game.isCheckmate()){ const w = game.turn()==="w" ? "чёрных" : "белых"; return ru ? "Мат. Победа "+w : "Checkmate"; }
+  if(game.isStalemate()) return ru ? "Пат — ничья" : "Stalemate, draw";
+  if(game.isThreefoldRepetition()) return ru ? "Троекратное повторение — ничья" : "Draw by repetition";
+  if(game.isInsufficientMaterial()) return ru ? "Мало материала — ничья" : "Draw";
+  if(game.isDraw()) return ru ? "Ничья" : "Draw";
+  return ru ? "Игра окончена" : "Game over";
+}
+
+function pieceEl(color,type){
+  if(!imgFail){
+    const img = document.createElement("img");
+    img.className = "pc"; img.alt = ""; img.draggable = false;
+    img.src = `https://lichess1.org/assets/piece/cburnett/${color}${type.toUpperCase()}.svg`;
+    img.onerror = () => { if(!imgFail){ imgFail = true; render(); } };
+    return img;
+  }
+  const s = document.createElement("span");
+  s.className = "gl "+color; s.textContent = GLYPH[type]+VS;
+  return s;
+}
+const bottomColor = () => flipped ? (me()==="w"?"b":"w") : me();
+function xy(sq){
+  const fi = FILES.indexOf(sq[0]), rk = +sq[1], w = bottomColor()==="w";
+  return [(w?fi:7-fi)+.5, (w?8-rk:rk-1)+.5];
+}
+function kingSquare(color){
+  for(const row of game.board()) for(const c of row) if(c && c.type==="k" && c.color===color) return c.square;
+  return null;
+}
+function render(){
+  const b = $("board"); b.innerHTML = "";
+  const w = bottomColor()==="w";
+  const hist = game.history({verbose:true}), last = hist[hist.length-1];
+  const checkSq = game.inCheck() ? kingSquare(game.turn()) : null;
+  const targets = sel ? game.moves({square:sel, verbose:true}) : [];
+  for(let row=0; row<8; row++) for(let col=0; col<8; col++){
+    const fi = w ? col : 7-col, rank = w ? 8-row : row+1, sq = FILES[fi]+rank;
+    const d = document.createElement("div");
+    d.className = "sq " + ((fi+rank)%2 ? "dk" : "lt");
+    const hl = c => { const e=document.createElement("div"); e.className="hl "+c; d.appendChild(e); };
+    if(last && (sq===last.from || sq===last.to)) hl(last.color===me() ? "bot" : "last");
+    if(sq===sel) hl("sel");
+    if(sq===checkSq) hl("chk");
+    const pc = game.get(sq);
+    if(pc) d.appendChild(pieceEl(pc.color, pc.type));
+    const t = targets.find(m => m.to===sq);
+    if(t){ const mk=document.createElement("div"); mk.className = "mk " + (pc||t.flags.includes("e") ? "cap" : "dot"); d.appendChild(mk); }
+    if(col===0){ const c=document.createElement("span"); c.className="co r"; c.textContent=rank; d.appendChild(c); }
+    if(row===7){ const c=document.createElement("span"); c.className="co f"; c.textContent=FILES[fi]; d.appendChild(c); }
+    d.addEventListener("click", () => onSquare(sq));
+    b.appendChild(d);
+  }
+  const svg = $("arrow");
+  if(last && last.color===me()){
+    let [x1,y1] = xy(last.from), [x2,y2] = xy(last.to);
+    const L = Math.hypot(x2-x1,y2-y1), k = (L-.32)/L;
+    x2 = x1+(x2-x1)*k; y2 = y1+(y2-y1)*k;
+    svg.innerHTML = `<defs><marker id="ah" viewBox="0 0 10 10" refX="4" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="rgba(40,110,255,.85)"/></marker></defs>
+      <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(40,110,255,.8)" stroke-width=".17" stroke-linecap="round" marker-end="url(#ah)"/>`;
+  } else svg.innerHTML = "";
+  renderMoves(); updateHero(); setPill();
+}
+function renderMoves(){
+  const box = $("moves"), h = game.history(); box.innerHTML = "";
+  for(let i=0; i<h.length; i+=2){
+    const n=document.createElement("span"); n.className="n"; n.textContent=(i/2+1)+".";
+    box.appendChild(n);
+    for(const j of [i,i+1]) if(h[j]){ const m=document.createElement("span"); m.className="m"+(j===h.length-1?" cur":""); m.textContent=h[j]; box.appendChild(m); }
+  }
+  box.scrollTop = box.scrollHeight;
+}
+function updateHero(){
+  const h = game.history({verbose:true});
+  const lb = [...h].reverse().find(m => m.color===me());
+  $("botMove").textContent = lb ? fmt(lb) : "—";
+  let st;
+  if(game.isGameOver()) st = "🏁 " + endText();
+  else if(busy) st = "Бот думает…";
+  else if(game.turn()===me()) st = "Ход бота (нет движка? сделай ход сам)";
+  else st = `Ход соперника (${me()==="w"?"чёрные":"белые"}) — скажи, напиши или нажми на доске`;
+  $("sub").textContent = st;
+  $("eval").textContent = lastEval==null ? "" : "оценка " + lastEval;
+}
+
+function onSquare(sq){
+  unlockAudio();
+  if(busy || game.isGameOver()) return;
+  const pc = game.get(sq);
+  if(sel){
+    const mv = game.moves({square:sel, verbose:true}).filter(m => m.to===sq);
+    if(mv.length){
+      const from = sel; sel = null;
+      if(mv.some(m => m.promotion)) return askPromo(from, sq);
+      return userMove({from, to:sq}, "tap");
+    }
+    sel = (pc && pc.color===game.turn() && sq!==sel) ? sq : null;
+    return render();
+  }
+  if(pc && pc.color===game.turn()){ sel = sq; render(); }
+}
+function askPromo(from,to){
+  const box = $("promoBox"); box.innerHTML = "";
+  for(const t of ["q","r","b","n"]){
+    const bt = document.createElement("button");
+    bt.appendChild(pieceEl(game.turn(), t));
+    bt.onclick = () => { $("promo").classList.remove("show"); userMove({from,to,promotion:t}, "tap"); };
+    box.appendChild(bt);
+  }
+  $("promo").classList.add("show");
+}
+$("promo").addEventListener("click", e => { if(e.target.id==="promo"){ $("promo").classList.remove("show"); render(); } });
+
+const legal = () => game.moves({verbose:true});
+function pickOne(arr, promo){
+  const keys = new Set(arr.map(m => m.from+m.to));
+  if(keys.size !== 1) return null;
+  return arr.find(m => !m.promotion || m.promotion===(promo||"q")) || arr[0];
+}
+function trySAN(text){
+  const t = text.trim();
+  if(!/^[a-hnbrqko0-8x+#=\-\s]+$/i.test(t) || !/[a-h][1-8]|[o0]-[o0]/i.test(t)) return null;
+  const g = new Chess(game.fen());
+  for(const v of [t, t.replace(/\s+/g,""), t.replace(/[o0]/gi,"O").replace(/\s+/g,"")]){
+    try{ const m = g.move(v); if(m) return m; }catch(e){}
+  }
+  return null;
+}
+function interpret(text){
+  const L = legal();
+  const san = trySAN(text);
+  if(san) return {kind:"move", mv:san};
+  const ru = text.trim().toLowerCase().match(/^(кр|к|с|л|ф|п)\s*[x:х]?\s*([a-h])\s*([1-8])\s*[+#]?$/);
+  if(ru){
+    const pc = {кр:"k",к:"n",с:"b",л:"r",ф:"q",п:"p"}[ru[1]];
+    const c = L.filter(x => x.piece===pc && x.to===ru[2]+ru[3]);
+    const one = pickOne(c); return one ? {kind:"move", mv:one} : {kind: c.length ? "ambig" : "illegal"};
+  }
+  const p = parse(text);
+  if(!p) return null;
+  if(p.type==="cmd") return {kind:"cmd", name:p.name};
+  if(p.type==="unclear") return {kind:"unclear"};
+  if(p.type==="castle"){
+    const c = L.find(x => x.flags.includes(p.side==="long" ? "q" : "k"));
+    return c ? {kind:"move", mv:c} : {kind:"illegal"};
+  }
+  if(p.type==="move"){
+    let one = pickOne(L.filter(x => x.from===p.from[0] && x.to===p.to[0]), p.promo);
+    if(one) return {kind:"move", mv:one};
+    one = pickOne(L.filter(x => p.from.includes(x.from) && p.to.includes(x.to) && (!p.piece || x.piece===p.piece)), p.promo);
+    if(one) return {kind:"move", mv:one};
+    if(p.piece){ one = pickOne(L.filter(x => x.to===p.to[0] && x.piece===p.piece), p.promo); if(one) return {kind:"move", mv:one}; }
+    one = pickOne(L.filter(x => x.to===p.to[0] && x.from[1]===p.from[0][1]), p.promo);
+    if(one) return {kind:"move", mv:one};
+    return {kind:"illegal"};
+  }
+  if(p.type==="to"){
+    let c = L.filter(x => x.to===p.to[0] && (!p.piece || x.piece===p.piece));
+    if(!c.length) c = L.filter(x => p.to.includes(x.to) && (!p.piece || x.piece===p.piece));
+    if(!c.length) return {kind:"illegal"};
+    if(!p.piece){ const pw = pickOne(c.filter(x => x.piece==="p"), p.promo); if(pw) return {kind:"move", mv:pw}; }
+    const one = pickOne(c, p.promo);
+    return one ? {kind:"move", mv:one} : {kind:"ambig"};
+  }
+  return null;
+}
+const MSG = {illegal:["Нелегальный ход","Illegal move"], ambig:["Уточни: какая фигура или откуда","Which piece?"], unclear:["Не понял, повтори","Say again"]};
+function act(r, src){
+  if(!r){ if(src!=="voice") heard("Не понял ход", true); return; }
+  if(r.kind==="cmd") return command(r.name);
+  if(busy) return;
+  if(r.kind==="move") return userMove(r.mv, src);
+  const m = MSG[r.kind]; heard((src==="voice"?"🎤 ":"")+m[0], true);
+  if(src==="voice") say(en() ? m[1] : m[0]);
+}
+function onHeard(alts){
+  alts = alts.map(a => a.trim()).filter(Boolean);
+  if(!alts.length) return;
+  log("слышу: " + alts.join(" | "));
+  heard("🎤 «" + alts[0] + "»");
+  let best = null;
+  for(const a of alts){
+    const r = interpret(a); if(!r) continue;
+    if(r.kind==="move" || r.kind==="cmd"){ best = r; break; }
+    if(!best) best = r;
+  }
+  if(best) act(best, "voice");
+}
+
+function userMove(mv, src){
+  let m = null;
+  try{ m = game.move({from:mv.from, to:mv.to, promotion:mv.promotion || undefined}); }catch(e){}
+  if(!m){ heard("Нелегальный ход", true); render(); return; }
+  sel = null; save(); render();
+  heard((src==="voice"?"🎤 ":src==="tap"?"👆 ":"⌨️ ") + (m.color===me() ? "Ход бота вручную: " : "Соперник: ") + fmt(m));
+  log((m.color===me() ? "бот (вручную): " : "соперник: ") + m.san);
+  if(game.isGameOver()){ const t = endText(!en()); return say(t); }
+  if(game.turn()===me()) botTurn();
+}
+async function botTurn(){
+  if(busy || game.isGameOver() || game.turn()!==me()) return;
+  busy = true; render(); await stopRec();
+  const fen = game.fen();
+  let uci = null;
+  try{ uci = await engineMove(fen); }catch(e){ log("движок: "+e); }
+  busy = false;
+  if(game.fen() !== fen){ render(); if(game.turn()===me()) setTimeout(botTurn, 50); return; }
+  if(!uci){ render(); heard("Нет связи с движком — проверь интернет", true); await say(en() ? "No engine connection" : "Нет связи с движком"); return; }
+  let m = null;
+  try{ m = game.move({from:uci.slice(0,2), to:uci.slice(2,4), promotion:uci[4] || undefined}); }catch(e){}
+  if(!m){ log("ход движка не принят: "+uci); render(); await say(en() ? "Engine error" : "Ошибка движка"); return; }
+  log("бот: " + m.san + "  (" + uci + ")");
+  save(); render();
+  let t = speechFor(m);
+  if(game.isGameOver()) t += ". " + endText(!en());
+  await say(t);
+}
+
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_,rej) => setTimeout(() => rej("таймаут"), ms))]);
+let sfP = null;
+function getSF(){
+  if(sfP) return sfP;
+  sfP = new Promise((res, rej) => {
+    try{
+      const blob = new Blob([`importScripts("https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js");`], {type:"application/javascript"});
+      const w = new Worker(URL.createObjectURL(blob));
+      const t = setTimeout(() => rej("stockfish не загрузился"), 15000);
+      w.onmessage = e => { if(String(e.data).includes("uciok")){ clearTimeout(t); res(w); } };
+      w.onerror = () => { clearTimeout(t); rej("stockfish ошибка"); };
+      w.postMessage("uci");
+    }catch(e){ rej(e); }
+  });
+  sfP.catch(() => { sfP = null; });
+  return sfP;
+}
+async function localSF(fen, depth){
+  const w = await getSF();
+  return new Promise(res => {
+    w.onmessage = e => { const m = String(e.data).match(/^bestmove ([a-h][1-8][a-h][1-8][qrbn]?)/); if(m) res(m[1]); };
+    w.postMessage("position fen " + fen);
+    w.postMessage(`go depth ${Math.min(depth,14)} movetime 2500`);
+  });
+}
+async function engineMove(fen){
+  const d = +S.depth;
+  const tries = [
+    ["chess-api.com", async () => {
+      const r = await fetch("https://chess-api.com/v1", {method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({fen, depth:Math.min(d,18), maxThinkingTime:50})});
+      const j = await r.json();
+      if(j.mate != null) lastEval = "мат в " + Math.abs(j.mate);
+      else if(typeof j.eval === "number") lastEval = (j.eval>0?"+":"") + j.eval.toFixed(1);
+      return j.lan || j.move;
+    }, 8000],
+    ["stockfish (локально)", () => localSF(fen, d), 20000],
+    ["stockfish.online", async () => {
+      const r = await fetch(`https://stockfish.online/api/s/v2.php?depth=${Math.min(d,15)}&fen=${encodeURIComponent(fen)}`);
+      const j = await r.json(); return (j.bestmove || "").split(" ")[1];
+    }, 9000],
+  ];
+  for(const [name, fn, ms] of tries){
+    try{
+      const u = await withTimeout(fn(), ms);
+      if(u && /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(u)) return u;
+      log(name + ": пустой ответ");
+    }catch(e){ log(name + ": " + e); }
+  }
+  return null;
+}
+
+let unlocked = false;
+function unlockAudio(){
+  if(unlocked || !window.speechSynthesis) return;
+  unlocked = true;
+  try{ const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); }catch(e){}
+}
+function pickVoice(lang){
+  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.replace("_","-").toLowerCase().startsWith(lang.slice(0,2)));
+  return vs.find(v => v.lang.replace("_","-")===lang && v.localService) || vs.find(v => v.lang.replace("_","-")===lang) || vs[0] || null;
+}
+async function say(text){
+  if(!text) return;
+  lastSpoken = text;
+  log("бот говорит: " + text);
+  if(!window.speechSynthesis){ log("нет синтеза речи"); return; }
+  speaking = true; setPill();
+  await stopRec();
+  return new Promise(res => {
+    let done = false;
+    const fin = () => { if(done) return; done = true; speaking = false; setPill(); res(); setTimeout(startListening, 350); };
+    const lang = en() ? "en-US" : "ru-RU";
+    const u = new SpeechSynthesisUtterance
