@@ -49,7 +49,10 @@ function say(text){
     speaking=true; try{rec&&rec.abort();}catch(e){}
     const u=new SpeechSynthesisUtterance(text); u.lang="ru-RU"; u.rate=1.0;
     const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.startsWith("ru")); if(v)u.voice=v;
-    u.onend=u.onerror=()=>{speaking=false;res();startListening();};
+    let done=false;
+    const fin=()=>{if(done)return;done=true;speaking=false;res();startListening();};
+    u.onend=u.onerror=fin;
+    setTimeout(fin,Math.max(2500,text.length*120));
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   });
 }
@@ -83,10 +86,12 @@ async function botTurn(){
   if(busy)return; busy=true;
   try{
     if(game.isGameOver()){await say(endText());return;}
-    big("думаю…");
-    const uci=await engineMove();
+    big("думаю…"); log("думаю…");
+    let uci=null;
+    try{uci=await engineMove();}catch(e){log("ошибка движка: "+e);}
     if(!uci){await say("Нет связи с движком");return;}
-    const m=game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
+    let m;
+    try{m=game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});}catch(e){log("ход движка не принят: "+uci);await say("Ошибка хода движка");return;}
     await say(describe(m)+(game.isGameOver()?". "+endText():""));
   }finally{busy=false;}
 }
@@ -94,7 +99,7 @@ const endText=()=>game.isCheckmate()?"Мат":game.isDraw()?"Ничья":"Игр
 
 async function handle(text){
   log("СЛЫШУ: "+text);
-  const p=parse(text); if(!p)return;
+  const p=parse(text); if(!p){log("  не понял");return;}
   if(p.type==="cmd"){
     if(p.name==="repeat")return say(lastSpoken||"Ходов пока нет");
     if(p.name==="new"){game=new Chess();await say("Новая партия");if(me==="w")botTurn();return;}
@@ -103,7 +108,7 @@ async function handle(text){
     if(p.name==="quit"){running=false;try{rec.abort();}catch(e){};return say("Стоп");}
     return;
   }
-  if(game.turn()===me)return;           // сейчас ход бота
+  if(game.turn()===me){log("  сейчас мой ход, жди");return;}
   let m=null;
   try{
     if(p.type==="castle"){
@@ -128,7 +133,7 @@ function startListening(){
   rec=new SR(); rec.lang="ru-RU"; rec.continuous=false; rec.interimResults=false;
   rec.onresult=e=>{const t=e.results[e.results.length-1][0].transcript;handle(t);};
   rec.onend=()=>{if(running&&!speaking&&!busy)setTimeout(startListening,150);};
-  rec.onerror=e=>{if(e.error==="not-allowed"){running=false;big("Разреши микрофон в настройках Safari");}};
+  rec.onerror=e=>{if(e.error!=="no-speech"&&e.error!=="aborted")log("микрофон: "+e.error);if(e.error==="not-allowed"){running=false;big("Разреши микрофон в настройках Safari");}};
   try{rec.start();}catch(e){}
 }
 
@@ -136,8 +141,8 @@ $("start").onclick=async()=>{
   me=$("color").value; game=new Chess(); running=true; $("log").textContent="";
   try{await navigator.wakeLock.request("screen");}catch(e){}
   speechSynthesis.getVoices();
-  await say("Готов. Я играю за "+(me==="w"?"белых":"чёрных"));
-  if(game.turn()===me)botTurn();
+  log("старт, я за "+(me==="w"?"белых":"чёрных"));
+  if(game.turn()===me)botTurn(); else say("Готов. Жду ход белых");
 };
 $("send").onclick=()=>{const v=$("typed").value;$("typed").value="";if(v)handle(v);};
 </script>

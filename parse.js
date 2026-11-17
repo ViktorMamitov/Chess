@@ -5,13 +5,22 @@ const PROMO = {"ферзь":"q","ферзя":"q","ладья":"r","ладью":"
 const COMMANDS = {"отмена":"undo","назад":"undo","ошибка":"undo","заново":"new","новая":"new","сброс":"new","повтори":"repeat","повторить":"repeat","белые":"white","черные":"black","выход":"quit","стоп":"quit"};
 
 export function parse(text) {
-  const t = text.toLowerCase().replace(/ё/g, "е").trim();
+  const raw = text.toLowerCase();
+  let t = text.toLowerCase().replace(/ё/g, "е").replace(/([a-zа-я])(?=\d)/g, "$1 ").replace(/(\d)(?=[a-zа-я])/g, "$1 ").trim();
   if (!t) return null;
-  const words = t.split(/\s+/);
+  // «едва» -> «е два», «бэтри» -> «бэ три»
+  const keys = Object.keys(FILES).sort((a, b) => b.length - a.length);
+  const words = [];
+  for (const w of t.split(/\s+/)) {
+    if (FILES[w] || RANKS[w] || PROMO[w] || COMMANDS[w] || /^[1-8]$/.test(w)) { words.push(w); continue; }
+    const k = keys.find(k => w.startsWith(k) && (RANKS[w.slice(k.length)] || /^[1-8]$/.test(w.slice(k.length))));
+    if (k) words.push(k, w.slice(k.length)); else words.push(w);
+  }
+  t = words.join(" ");
   if (words.includes("рокировка") || words.includes("короткая") || words.includes("длинная"))
     return {type: "castle", side: words.includes("длинная") ? "long" : "short"};
   for (const w of words) if (COMMANDS[w]) return {type: "cmd", name: COMMANDS[w]};
-  let squares = t.match(/[a-h][1-8]/g) || [];
+  let squares = raw.match(/[a-h][1-8]/g) || [];
   if (!squares.length) {
     let f = null;
     for (const w of words) {
