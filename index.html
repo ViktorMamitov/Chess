@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Шахматы в очках</title>
+<style>
+  body{font-family:-apple-system,sans-serif;background:#111;color:#eee;margin:0;padding:16px;max-width:520px;margin:auto}
+  button,select,input{font-size:18px;padding:12px;border-radius:10px;border:0;margin:4px 0;width:100%;box-sizing:border-box}
+  button{background:#2d7ff9;color:#fff} button.sec{background:#333}
+  #log{background:#1c1c1c;border-radius:10px;padding:10px;height:240px;overflow:auto;font-size:15px;white-space:pre-wrap}
+  #big{font-size:26px;font-weight:600;margin:12px 0;min-height:70px}
+  small{color:#999}
+</style>
+</head>
+<body>
+<h2>♟ Шахматы в очках</h2>
+<select id="color">
+  <option value="w">Я (бот) играю за белых</option>
+  <option value="b">Я (бот) играю за чёрных</option>
+</select>
+<button id="start">Старт</button>
+<div id="big">—</div>
+<div id="log"></div>
+<input id="typed" placeholder="Ход текстом: е два е четыре / e2e4">
+<button class="sec" id="send">Отправить текстом</button>
+<small>Очки подключены к айфону → микрофон и динамик идут через них. Экран не блокируй.
+Команды: «отмена», «повтори», «заново», «короткая/длинная рокировка», «ферзь» при превращении.</small>
+
+<script type="module">
+import {Chess} from "https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/esm/chess.js";
+import {parse} from "./parse.js";
+
+const FILE_RU={a:"а",b:"бэ",c:"цэ",d:"дэ",e:"е",f:"эф",g:"гэ",h:"аш"};
+const RANK_RU=["","один","два","три","четыре","пять","шесть","семь","восемь"];
+const PIECE_RU={p:"пешка",n:"конь",b:"слон",r:"ладья",q:"ферзь",k:"король"};
+const sq=s=>FILE_RU[s[0]]+" "+RANK_RU[+s[1]];
+
+const $=id=>document.getElementById(id);
+let game=new Chess(), me="w", running=false, speaking=false, lastSpoken="", rec=null, busy=false;
+
+function log(s){const l=$("log");l.textContent+=s+"\n";l.scrollTop=l.scrollHeight;}
+function big(s){$("big").textContent=s;}
+
+function say(text){
+  log("БОТ: "+text); big(text); lastSpoken=text;
+  return new Promise(res=>{
+    speaking=true; try{rec&&rec.abort();}catch(e){}
+    const u=new SpeechSynthesisUtterance(text); u.lang="ru-RU"; u.rate=1.0;
+    const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.startsWith("ru")); if(v)u.voice=v;
+    u.onend=u.onerror=()=>{speaking=false;res();startListening();};
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  });
+}
+
+function describe(m){
+  if(m.flags.includes("k"))return "короткая рокировка";
+  if(m.flags.includes("q"))return "длинная рокировка";
+  let s=`${PIECE_RU[m.piece]} ${sq(m.from)} ${sq(m.to)}`;
+  if(m.captured)s+=", со взятием";
+  if(m.promotion)s+=", в "+({q:"ферзя",r:"ладью",b:"слона",n:"коня"})[m.promotion];
+  if(m.san.includes("#"))s+=", мат";else if(m.san.includes("+"))s+=", шах";
+  return s;
+}
+
+async function engineMove(){
+  const fen=game.fen();
+  const tries=[
+    async()=>{const r=await fetch("https://chess-api.com/v1",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fen,depth:12})});const j=await r.json();return j.move||j.lan;},
+    async()=>{const r=await fetch("https://stockfish.online/api/s/v2.php?depth=12&fen="+encodeURIComponent(fen));const j=await r.json();return (j.bestmove||"").split(" ")[1];},
+  ];
+  for(const t of tries){
+    try{
+      const ctl=await Promise.race([t(),new Promise((_,rej)=>setTimeout(()=>rej("timeout"),8000))]);
+      if(ctl&&/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(ctl))return ctl;
+    }catch(e){log("движок: "+e);}
+  }
+  return null;
+}
+
+async function botTurn(){
+  if(busy)return; busy=true;
+  try{
+    if(game.isGameOver()){await say(endText());return;}
+    big("думаю…");
+    const uci=await engineMove();
+    if(!uci){await say("Нет связи с движком");return;}
+    const m=game.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
+    await say(describe(m)+(game.isGameOver()?". "+endText():""));
+  }finally{busy=false;}
+}
+const endText=()=>game.isCheckmate()?"Мат":game.isDraw()?"Ничья":"Игра окончена";
+
+async function handle(text){
+  log("СЛЫШУ: "+text);
+  const p=parse(text); if(!p)return;
+  if(p.type==="cmd"){
+    if(p.name==="repeat")return say(lastSpoken||"Ходов пока нет");
+    if(p.name==="new"){game=new Chess();await say("Новая партия");if(me==="w")botTurn();return;}
+    if(p.name==="undo"){game.undo();if(game.history().length&&game.turn()===me)game.undo();return say("Откатил");}
+    if(p.name==="white"||p.name==="black"){me=p.name==="white"?"w":"b";await say("Я за "+(me==="w"?"белых":"чёрных"));if(game.turn()===me)botTurn();return;}
+    if(p.name==="quit"){running=false;try{rec.abort();}catch(e){};return say("Стоп");}
+    return;
+  }
+  if(game.turn()===me)return;           // сейчас ход бота
+  let m=null;
+  try{
+    if(p.type==="castle"){
+      m=game.moves({verbose:true}).find(x=>x.flags.includes(p.side==="short"?"k":"q"));
+      if(m)m=game.move(m.san);
+    }else{
+      const pc=game.get(p.from);
+      const promo=(pc&&pc.type==="p"&&(p.to[1]==="8"||p.to[1]==="1"))?(p.promo||"q"):undefined;
+      m=game.move({from:p.from,to:p.to,promotion:promo});
+    }
+  }catch(e){m=null;}
+  if(!m){await say("Нелегальный ход, повтори");return;}
+  await say("Принято");
+  botTurn();
+}
+
+function startListening(){
+  if(!running||speaking)return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){big("Нет распознавания речи, печатай ходы");return;}
+  try{rec&&rec.abort();}catch(e){}
+  rec=new SR(); rec.lang="ru-RU"; rec.continuous=false; rec.interimResults=false;
+  rec.onresult=e=>{const t=e.results[e.results.length-1][0].transcript;handle(t);};
+  rec.onend=()=>{if(running&&!speaking&&!busy)setTimeout(startListening,150);};
+  rec.onerror=e=>{if(e.error==="not-allowed"){running=false;big("Разреши микрофон в настройках Safari");}};
+  try{rec.start();}catch(e){}
+}
+
+$("start").onclick=async()=>{
+  me=$("color").value; game=new Chess(); running=true; $("log").textContent="";
+  try{await navigator.wakeLock.request("screen");}catch(e){}
+  speechSynthesis.getVoices();
+  await say("Готов. Я играю за "+(me==="w"?"белых":"чёрных"));
+  if(game.turn()===me)botTurn();
+};
+$("send").onclick=()=>{const v=$("typed").value;$("typed").value="";if(v)handle(v);};
+</script>
+</body>
+</html>
