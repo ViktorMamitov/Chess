@@ -1,0 +1,2049 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#17110d">
+<title>Шахматы в очках</title>
+<style>
+:root{--bg:#17110d;--card:#251d17;--card2:#2f251d;--line:#43362a;--text:#efe6d4;--muted:#a39580;--acc:#c9a45c;--gold:#d8b46a;--good:#7fb069;--bad:#c9524a;--warn:#d9a441;--teal:#4f9aa3;--org:#d08a3e;--serif:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Times New Roman",serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(130% 80% at 50% 0%,#3a2a1e 0%,#241a13 45%,#120d0a 100%) fixed}
+#app{max-width:560px;margin:0 auto;padding:max(8px,env(safe-area-inset-top)) 0 calc(104px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;gap:10px;margin:4px 14px 8px}
+.brand{font:700 20px/1 var(--serif);letter-spacing:.3px;white-space:nowrap}.brand span{color:var(--muted);font-weight:400;font-style:italic;font-size:16px}
+.grow{flex:1}
+.hbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#2a2018;color:var(--gold);display:grid;place-items:center}
+.hbtn:active{transform:scale(.95)}
+.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.chip{font-size:12px;max-width:44vw;overflow:hidden;text-overflow:ellipsis;padding:5px 10px;border-radius:6px;background:#2a2018;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.ok{color:var(--good);border-color:#4a5c3a}.chip.warn{color:var(--warn);border-color:#6b5420}
+.opp{display:flex;align-items:stretch;gap:12px;margin:8px 14px 8px}
+.avatar{flex:none;width:58px;height:58px;align-self:center;border-radius:50%;background:radial-gradient(circle at 35% 28%,#4a3a2c,#1c140e 75%);border:2px solid #8f7440;box-shadow:0 0 0 3px #1c140e,0 6px 14px #0009;display:grid;place-items:center;overflow:hidden}
+.avatar svg{width:76%;height:76%;margin-top:6%}
+.av{fill:url(#gw);stroke:#5a4520;stroke-width:2;stroke-linejoin:round}
+.bubble{position:relative;flex:1;background:#2a2018;border:1px solid var(--line);border-left:3px solid var(--acc);color:var(--text);border-radius:4px 10px 10px 4px;padding:10px 14px;font:italic 15.5px/1.35 var(--serif);max-height:88px;overflow:hidden;box-shadow:inset 0 1px 0 #ffffff0d}
+.bubble.pop{animation:pop .25s ease-out}
+@keyframes pop{from{opacity:.3}}
+.pbar{display:flex;align-items:center;gap:8px;padding:4px 16px;font-size:14px;min-height:30px}
+.pbar .dot{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,#fbf4e2,#b69a63);box-shadow:0 0 0 1px #0008}
+.pbar .dot.b{background:linear-gradient(135deg,#6b5d52,#0c0908);box-shadow:0 0 0 1px #c9a45c66}
+.pbar b{font:700 15px var(--serif)}.pbar .sub{color:var(--muted);font-size:12px}
+.pbar .acc{font-size:12px;color:var(--muted)}
+.pbar.turn b{color:var(--gold)}
+.think{display:none;align-items:center;gap:6px;color:var(--gold);font-size:12px}
+.think.on{display:inline-flex}.think i{width:12px;height:12px;border:2px solid var(--gold);border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#evalbar{height:12px;margin:2px 16px 8px;border-radius:3px;background:linear-gradient(180deg,#1a1411,#2b221b);position:relative;overflow:hidden;box-shadow:0 0 0 1px #5a4630,inset 0 1px 3px #000a}
+#evalFill{position:absolute;top:0;bottom:0;background:linear-gradient(180deg,#fbf4e2,#cdb98d);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+#evalNum{position:absolute;top:-1px;bottom:0;display:flex;align-items:center;font:700 9.5px var(--serif)}
+.boardwrap{position:relative;padding:0 8px}
+.frame{padding:11px;border-radius:6px;background:linear-gradient(135deg,#6b4a2c,#3d2915 55%,#593b21);box-shadow:0 18px 40px #000b,inset 0 1px 0 #ffffff26,inset 0 0 0 1px #00000088}
+#board{aspect-ratio:1;width:100%;box-shadow:0 0 0 2px #1a0f07,0 0 0 3px #8f6a3a66,inset 0 0 12px #0008}
+.bsvg{width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+.sq.l{fill:#e6d3a8}.sq.d{fill:#9a6a42}
+.co{font:700 .19px var(--serif);opacity:.95}.co.cl{fill:#e6d3a8}.co.cd{fill:#7a4f2e}
+.hl.last{fill:#e5bd3f;opacity:.42}.hl.sel{fill:#e5bd3f;opacity:.6}.hl.hov{fill:#fff;opacity:.28}
+.dot{fill:#2a1608;opacity:.4}.ring{fill:none;stroke:#2a1608;stroke-opacity:.5;stroke-width:.09}
+.pc{cursor:grab;transition:opacity .25s}
+.pc .shd{fill:#1c0e04;opacity:.45;filter:blur(.025px)}
+.pc.w .body{fill:url(#gw);stroke:#4a3a1c;stroke-width:1.8;stroke-linejoin:round}
+.pc.b .body{fill:url(#gb);stroke:#000;stroke-width:1.8;stroke-linejoin:round}
+.pcs{width:100%;height:100%;display:block}
+.pcs.w .body{fill:url(#gw);stroke:#4a3a1c;stroke-width:1.8;stroke-linejoin:round}.pcs.b .body{fill:url(#gb);stroke:#000;stroke-width:1.8;stroke-linejoin:round}
+.pc.w .eye,.pcs.w .eye{fill:#3a2a10}.pc.b .eye,.pcs.b .eye{fill:#e9dcc0}
+.ln{fill:none;stroke:#00000066;stroke-width:1.8;stroke-linecap:round}
+.pc.b .ln,.pcs.b .ln{stroke:#ffffff30}
+.pc.drag{cursor:grabbing}
+.arw{mix-blend-mode:normal}
+.dock{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#2a2018,#1a130e);border-top:1px solid #6b5230;box-shadow:0 -8px 24px #0008;z-index:10;max-width:560px;margin:0 auto}
+.btn{appearance:none;border:0;background:transparent;color:#d9c9a6;border-radius:10px;padding:8px 0 6px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;cursor:pointer;transition:transform .08s,background .15s,color .15s}
+.btn .ic{width:25px;height:25px}
+.btn small{font:600 11px var(--serif);letter-spacing:.3px;color:var(--muted)}.btn:active{transform:scale(.95)}
+.btn.on{background:#c9a45c24;color:var(--gold)}.btn.on small{color:var(--gold)}
+.btn.rec{background:#c9524a2e;color:#e8837b}.btn.rec small{color:#e8837b}
+.btn[disabled]{opacity:.3}
+@keyframes pulse{50%{box-shadow:0 0 0 5px #c9524a22}}
+.card{background:#251d17;border:1px solid var(--line);border-radius:8px;padding:13px 14px;margin:10px 0}
+.card h3{margin:0 0 8px;font:700 12px var(--serif);letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:8px}
+.card h3 .grow{flex:1}
+.row{display:flex;align-items:center;gap:10px}
+input[type=range]{width:100%;accent-color:var(--acc);height:28px}
+.elo{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}.elo b{font:700 30px var(--serif);font-variant-numeric:tabular-nums}.elo span{color:var(--muted)}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.pill{border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:6px;padding:6px 11px;font-size:13px;cursor:pointer}
+.pill.on{background:#4a3a1e;border-color:var(--acc)}
+.pill.lay::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--c);opacity:.35;vertical-align:-1px}
+.pill.lay.on::before{opacity:1}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+#coach p{margin:6px 0}#coach .k{color:var(--muted)}
+.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;margin-left:4px;vertical-align:1px}
+.badge.best{background:#2c3a22;color:#a9d08e}.badge.good{background:#2a3322;color:#bcd9a3}.badge.inacc{background:#463a18;color:#ecc769}.badge.mistake{background:#4a2e14;color:#e8964a}.badge.blunder{background:#4a1d1a;color:#e8837b}
+.tag{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.moves{display:flex;flex-wrap:wrap;gap:4px 3px;max-height:150px;overflow:auto}
+.mv{padding:3px 7px;border-radius:8px;background:var(--card2);font-size:13px;white-space:nowrap}.mv.n{background:none;color:var(--muted);padding-right:0}
+.mv i{font-style:normal;font-size:11px;margin-left:3px}
+.mv.blunder i{color:var(--bad)}.mv.mistake i{color:#ffa047}.mv.inacc i{color:#ffd166}.mv.best i{color:var(--good)}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat div{background:var(--card2);border-radius:12px;padding:10px}.stat b{font-size:22px}.stat small{display:block;color:var(--muted);font-size:12px}
+.bar{height:6px;border-radius:9px;background:#3a2e22;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#a8873f,#d8b46a)}
+select,input[type=text],textarea{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:15px}
+label.sw{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.set{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#000a;backdrop-filter:blur(4px);z-index:5}
+.overlay.on{display:flex}
+.modal{background:#251d17;border:1px solid var(--line);border-radius:18px;padding:16px;text-align:center;min-width:200px}
+.modal h4{margin:0 0 10px;font-size:16px}
+.pp{display:flex;gap:8px;justify-content:center}.pp button{width:62px;height:62px;padding:4px;border-radius:14px;border:1px solid var(--line);background:var(--card2);cursor:pointer}
+.go{margin-top:12px;background:linear-gradient(#d8b46a,#a8873f);border:0;color:#201508;border-radius:8px;padding:10px 18px;font-size:15px;font-weight:600;cursor:pointer}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,30px);background:#2a2018;border:1px solid var(--line);padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;z-index:20;font-size:14px}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#spark{width:100%;height:46px;display:block}
+.small{font-size:12px;color:var(--muted)}
+
+.main-cards{padding:0 14px}.main-cards .card{margin:12px 0}
+
+.main-cards{padding:0 14px}.main-cards .card{margin:12px 0}
+
+.tools{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:6px 8px 0}
+.tb{appearance:none;border:1px solid var(--line);background:linear-gradient(#2f251d,#241b15);color:#e2d3b0;border-radius:8px;padding:9px 2px 8px;font:600 11.5px var(--serif);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;box-shadow:inset 0 1px 0 #ffffff10}
+.tb .ic{width:21px;height:21px;color:var(--gold)}.tb:active{transform:scale(.96)}.tb.on{border-color:var(--acc);background:#3a2e1c}
+.editp{display:none;margin:10px 8px 0}.editing .editp{display:block}.editing .tools{display:none}
+.pal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:4px 0}
+.pal button{aspect-ratio:1;padding:2px;border-radius:8px;border:1px solid var(--line);background:#33281f;cursor:pointer;color:var(--gold);font:700 20px var(--serif)}
+.pal button.on{border-color:var(--gold);background:#4a3a1e;box-shadow:0 0 0 1px var(--gold)}
+.lbl{margin:12px 0 5px;font:600 12px var(--serif);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;background:#2a2018;border:0;border-right:1px solid var(--line);color:var(--text);padding:10px 4px;font:600 14px var(--serif);cursor:pointer}
+.seg button:last-child{border-right:0}.seg button.on{background:linear-gradient(#d8b46a,#a8873f);color:#201508}
+.row.wrap{flex-wrap:wrap;gap:6px}
+.mat{font:700 12px var(--serif);color:var(--good);margin-left:2px}
+.editing .dock .btn:not(#bSet){opacity:.3;pointer-events:none}
+.editing .main-cards>.card:not(#settings){display:none}
+
+#forecast{margin:-4px 16px 8px;font:italic 13px var(--serif);color:var(--muted);min-height:18px}
+body.noscroll{overflow:hidden}
+#review{position:fixed;inset:0;z-index:40;background:radial-gradient(130% 80% at 50% 0%,#3a2a1e 0%,#241a13 45%,#120d0a 100%);overflow:auto;display:none;-webkit-overflow-scrolling:touch}
+#review.on{display:block}
+.rv-in{max-width:560px;margin:0 auto;padding:max(10px,env(safe-area-inset-top)) 12px calc(30px + env(safe-area-inset-bottom))}
+.rv-head{display:flex;align-items:center;gap:8px;margin:6px 2px 8px;font:700 20px var(--serif)}
+.rvframe{margin:6px 0}
+.rv-nav{display:flex;align-items:center;gap:6px;justify-content:space-between;margin:10px 0}
+.rv-nav .pill{padding:9px 12px;font-size:14px}.rv-nav .pill[disabled]{opacity:.3}
+#rvGraph{width:100%;height:90px;display:block;background:#1b140f;border-radius:6px;border:1px solid var(--line)}
+.kmoment{display:block;width:100%;text-align:left;background:#2a2018;border:1px solid var(--line);border-radius:8px;color:var(--text);padding:10px 12px;margin:6px 0;font-size:14px;cursor:pointer}
+.kmoment.on{border-color:var(--acc)}
+#rvTips p{margin:8px 0}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.hrow:first-child{border-top:0}
+
+.two{display:grid;grid-template-columns:1fr 1.5fr;gap:10px}.two .lbl{margin-top:8px}.two .seg button{padding:9px 2px;font-size:13px}
+.editing .opp,.editing #evalbar,.editing #forecast,.editing #barTop,.editing #barBot{display:none}
+.editing header{margin-bottom:10px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">Шахматы <span>в очках</span></div>
+    <div class="grow"></div>
+    <div id="engChip" class="chip">движок…</div>
+  </header>
+
+  <section class="opp">
+    <div class="avatar"><svg viewBox="0 0 100 100"><use href="#P2" class="body av"/></svg></div>
+    <div id="bubble" class="bubble"></div>
+  </section>
+
+  <div id="barTop" class="pbar"><span class="dot"></span><b></b><span class="sub"></span><span class="mat"></span><span class="grow"></span><span class="think"><i></i>думает</span><span class="acc"></span></div>
+  <div id="evalbar"><div id="evalFill"></div><div id="evalNum">0.0</div></div>
+  <div id="forecast"></div>
+  <div class="boardwrap">
+    <div class="frame"><div id="board"></div></div>
+    <div id="promo" class="overlay"><div class="modal"><h4>Превращение пешки</h4><div class="pp" id="ppBtns"></div></div></div>
+    <div id="over" class="overlay"><div class="modal"><h4 id="overTxt"></h4><button class="go" id="overReview">Разбор партии</button> <button class="pill" id="overNew" style="margin-left:6px">Новая</button> <button class="pill" id="overClose" style="margin-left:6px">Закрыть</button></div></div>
+  </div>
+  <div id="barBot" class="pbar"><span class="dot"></span><b></b><span class="sub"></span><span class="mat"></span><span class="grow"></span><span class="think"><i></i>думает</span><span class="acc"></span></div>
+  <div class="tools" id="tools">
+    <button class="tb" id="bHint"><svg viewBox="0 0 24 24" class="ic"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.500 10.900c.700.600 1 1.300 1 2.100h5c0-.800.300-1.500 1-2.100A6 6 0 0 0 12 3z"/></svg>Подсказка</button>
+    <button class="tb" id="bReview"><svg viewBox="0 0 24 24" class="ic"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Разбор</button>
+    <button class="tb" id="bEdit"><svg viewBox="0 0 24 24" class="ic"><path d="M4 20l4.500-1L19 8.500 15.500 5 5 15.500z"/><path d="M13.500 7l3.500 3.500"/></svg>Редактор</button>
+    <button class="tb" id="bFlip"><svg viewBox="0 0 24 24" class="ic"><path d="M7 4v14M7 18l-3-3M7 18l3-3M17 20V6M17 6l-3 3M17 6l3 3"/></svg>Развернуть</button>
+    <button class="tb" id="bNew"><svg viewBox="0 0 24 24" class="ic"><path d="M12 5v14M5 12h14"/></svg>Новая</button>
+  </div>
+  <div class="card editp" id="editPanel">
+    <h3>Редактор позиции <span class="grow"></span><span class="small">двигай, ставь, убирай</span></h3>
+    <div class="pal" id="palW"></div><div class="pal" id="palB"></div>
+    <div class="row wrap" style="margin:8px 0 2px">
+      <button class="pill" id="eClear">Очистить</button><button class="pill" id="eStart">Начальная</button><button class="pill" id="eCur">Текущая</button>
+    </div>
+    <div class="hint">Выбери фигуру из набора и тапай по клеткам. ✕ убирает. Фигуры на доске можно перетаскивать; утащи за край доски, чтобы убрать.</div>
+    <div class="two">
+      <div><div class="lbl">Чей ход</div><div class="seg" id="segTurn"><button data-v="0">Белых</button><button data-v="1">Чёрных</button></div></div>
+      <div><div class="lbl">Бот играет за</div><div class="seg" id="segBot"><button data-v="0">Белых</button><button data-v="1">Чёрных</button><button data-v="-1">Никого</button></div></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="pill" id="eCancel">Отмена</button><span class="grow"></span><button class="go" id="eGo" style="margin:0">Начать партию</button></div>
+  </div>
+  <div class="main-cards">
+  <div class="card slim"><h3>Слои на доске</h3><div class="presets" id="layers"></div></div>
+
+  <div class="card"><h3>Что происходит</h3><div id="coach"></div></div>
+
+  <div class="card"><h3>История партий</h3><div id="hist"></div></div>
+
+  <div class="card" id="settings">
+    <h3>Уровень бота</h3>
+    <div class="seg" id="segLvl"><button data-v="elo">По ELO</button><button data-v="acc">Цель по точности</button></div>
+    <div id="lvlElo">
+      <div class="elo"><b id="eloVal">1500</b><span>ELO · <span id="eloLbl"></span></span></div>
+      <input type="range" id="elo" min="400" max="3200" step="50">
+      <div class="presets" id="presets"></div>
+      <div class="hint">ELO приблизительный и не равен рейтингу chess.com. Бот играет по реальной оценке позиции, но на низком уровне намеренно выбирает не лучшие ходы.</div>
+    </div>
+    <div id="lvlAcc" style="display:none">
+      <div class="elo"><b id="tgtVal">71%</b><span>точность бота по итогам партии</span></div>
+      <input type="range" id="tgt" min="40" max="98" step="1">
+      <div class="presets" id="tgtPresets"></div>
+      <div class="hint">Бот играет на полную силу и старается выиграть, но, когда уверенно впереди, выбирает более слабые, но всё ещё выигрышные ходы, чтобы средняя точность держалась около цели. Это приближение: результат плавает на несколько процентов, а в трудной позиции бот просто играет лучшие ходы.</div>
+    </div>
+    <div class="lbl">Фора сопернику бота</div>
+    <select id="selOdds"></select>
+    <div class="hint">В новой партии у стороны бота убирается выбранная фигура. Для любой другой позиции есть «Редактор».</div>
+  </div>
+  </div>
+
+  <div class="card"><h3>Оценка игры <span class="grow"></span><span class="small" id="engInfo"></span></h3>
+    <div class="stat" id="stats"></div>
+    <svg id="spark" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
+    <div class="hint">Точность считается по оценке движка: чем меньше потерял по сравнению с лучшим ходом, тем выше процент.</div>
+  </div>
+
+  <div class="card"><h3>Ходы</h3><div class="moves" id="moves"></div></div>
+
+  <div class="card"><h3>Настройки</h3>
+    <div class="set">
+      <select id="selMode"><option value="vs">Против бота</option><option value="assist">Бот за меня</option><option value="free">Свободная доска</option></select>
+      <select id="selColor"><option value="w">Я за белых</option><option value="b">Я за чёрных</option></select>
+    </div>
+    <label class="sw">Озвучивать ходы бота <input type="checkbox" id="chkSpeak"></label>
+    <label class="sw">Озвучивать и пояснения <input type="checkbox" id="chkWhy"></label>
+    <label class="sw">Ходы только после слова «бот» <input type="checkbox" id="chkWake"></label>
+    <label class="sw">Вибрация ходов <input type="checkbox" id="chkHap"></label>
+    <label class="sw">Звук фигур <input type="checkbox" id="chkSnd"></label>
+    <div class="hint">Команды («отмена», «подсказка», «новая партия», «кто выигрывает», «ошибись») работают только со словом «бот» в начале: «бот, отмена». Ходы ловятся без него, а обычный разговор отсеивается. Включи галочку выше, если хочешь, чтобы и ходы принимались только после «бот».</div>
+    <div class="lbl">Голос бота</div>
+    <select id="selVoice"></select>
+    <div class="hint" id="voiceNote"></div>
+    <div class="lbl">Тембр (ниже = глубже)</div><input type="range" id="pitch" min="0.5" max="1.2" step="0.05">
+    <div class="lbl">Скорость</div><input type="range" id="rate" min="0.7" max="1.3" step="0.05">
+    <div class="row" style="margin-top:8px"><button class="pill" id="bVoiceTest">Тест голоса</button><button class="pill" id="bCopyFen">Копировать FEN</button><button class="pill" id="bCopyPgn">Копировать PGN</button></div>
+    <div style="margin-top:10px"><input type="text" id="fen" placeholder="Вставь FEN и нажми «Загрузить»"></div>
+    <div class="row" style="margin-top:8px"><button class="pill" id="bLoad">Загрузить позицию</button></div>
+    <div class="hint" id="voiceLog"></div>
+    <div class="hint">Режимы: <b>против бота</b> — бот ходит за противоположный цвет; <b>бот ходит за меня</b> — бот говорит твои ходы, а ходы соперника ты диктуешь голосом или двигаешь на доске; <b>свободная доска</b> — только анализ. Двигать можно любые фигуры в любой момент: бот продолжит с новой позиции.</div>
+  </div>
+  </div>
+</div>
+
+<nav class="dock">
+  <button class="btn" id="bUndo"><svg viewBox="0 0 24 24" class="ic"><path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12" transform="translate(0 -5)"/></svg><small>Назад</small></button>
+  <button class="btn" id="bRedo"><svg viewBox="0 0 24 24" class="ic"><path d="M15 7l5 5-5 5"/><path d="M20 12H10a6 6 0 0 0 0 12" transform="translate(0 -5)"/></svg><small>Вперёд</small></button>
+  <button class="btn mic" id="bMic"><svg viewBox="0 0 24 24" class="ic"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><small>Голос</small></button>
+  <button class="btn" id="bMistake"><svg viewBox="0 0 24 24" class="ic"><path d="M2.5 12s3.600-6.500 9.500-6.500S21.500 12 21.500 12s-3.600 6.500-9.500 6.500S2.500 12 2.500 12z"/><circle cx="12" cy="12" r="2.600"/><path d="M4 4l16 16"/></svg><small>Ошибись</small></button>
+  <button class="btn" id="bSet"><svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="3"/><path d="M19.400 15a1.700 1.700 0 0 0 .300 1.800l.100.100a2 2 0 1 1-2.800 2.800l-.100-.100a1.700 1.700 0 0 0-1.800-.300 1.700 1.700 0 0 0-1 1.500V21a2 2 0 1 1-4 0v-.100a1.700 1.700 0 0 0-1.100-1.500 1.700 1.700 0 0 0-1.800.300l-.100.100a2 2 0 1 1-2.800-2.800l.100-.100a1.700 1.700 0 0 0 .300-1.800 1.700 1.700 0 0 0-1.500-1H3a2 2 0 1 1 0-4h.100a1.700 1.700 0 0 0 1.500-1.100 1.700 1.700 0 0 0-.300-1.800l-.100-.100a2 2 0 1 1 2.800-2.800l.100.100a1.700 1.700 0 0 0 1.800.300H9a1.700 1.700 0 0 0 1-1.500V3a2 2 0 1 1 4 0v.100a1.700 1.700 0 0 0 1 1.500 1.700 1.700 0 0 0 1.800-.300l.100-.100a2 2 0 1 1 2.800 2.800l-.100.100a1.700 1.700 0 0 0-.300 1.800V9a1.700 1.700 0 0 0 1.500 1H21a2 2 0 1 1 0 4h-.100a1.700 1.700 0 0 0-1.500 1z"/></svg><small>Настройки</small></button>
+</nav>
+
+<div id="review"><div class="rv-in">
+  <div class="rv-head"><b>Разбор партии</b><span class="grow"></span><button class="pill" id="rvClose">Закрыть</button></div>
+  <div id="rvProg" class="small"></div>
+  <div class="frame rvframe"><div id="rvBoard"></div></div>
+  <div class="rv-nav"><button class="pill" id="rvFirst">«</button><button class="pill" id="rvPrev">‹ Назад</button><span id="rvPos" class="small"></span><button class="pill" id="rvNext">Вперёд ›</button><button class="pill" id="rvLast">»</button></div>
+  <div class="card" id="rvMove"></div>
+  <div class="card"><h3>График оценки</h3><svg id="rvGraph" viewBox="0 0 100 40" preserveAspectRatio="none"></svg><div class="hint">Выше середины — лучше у белых. Точки: оранжевые — ошибки, красные — зевки. Нажми на график, чтобы перейти к ходу.</div></div>
+  <div class="card"><h3>Итоги</h3><div class="stat" id="rvStats"></div></div>
+  <div class="card"><h3>Ключевые моменты</h3><div id="rvKey"></div></div>
+  <div class="card"><h3>Советы</h3><div id="rvTips"></div></div>
+</div></div>
+<div id="toast"></div>
+<script id="core-src" type="text/plain">// ===== rules.js: правила шахмат (0x88), без зависимостей =====
+const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const F_CAP = 1, F_EP = 2, F_CK = 4, F_CQ = 8, F_DBL = 16;
+const KNIGHT_D = [-33, -31, -18, -14, 14, 18, 31, 33];
+const KING_D = [-17, -16, -15, -1, 1, 15, 16, 17];
+const BISHOP_D = [-17, -15, 15, 17];
+const ROOK_D = [-16, -1, 1, 16];
+const FILES = "abcdefgh";
+const sqName = s => FILES[s & 7] + ((s >> 4) + 1);
+const sqFromName = n => (n.charCodeAt(1) - 49) * 16 + (n.charCodeAt(0) - 97);
+const TYPE_CH = ["", "p", "n", "b", "r", "q", "k"];
+
+function rightsLost(sq) {
+  switch (sq) {
+    case 0x04: return 3; case 0x00: return 2; case 0x07: return 1;
+    case 0x74: return 12; case 0x70: return 8; case 0x77: return 4;
+    default: return 0;
+  }
+}
+
+class Position {
+  constructor(fen) { this.load(fen || START_FEN); }
+
+  load(fen) {
+    const parts = fen.trim().split(/\s+/);
+    const b = new Int8Array(128);
+    const rows = parts[0].split("/");
+    if (rows.length !== 8) throw new Error("bad fen rows");
+    this.king = [-1, -1];
+    for (let i = 0; i < 8; i++) {
+      const r = 7 - i; let f = 0;
+      for (const ch of rows[i]) {
+        if (ch >= "1" && ch <= "8") { f += +ch; continue; }
+        const t = TYPE_CH.indexOf(ch.toLowerCase());
+        if (t < 1 || f > 7) throw new Error("bad fen piece");
+        const c = ch === ch.toUpperCase() ? 0 : 1;
+        b[r * 16 + f] = (c << 3) | t;
+        if (t === 6) this.king[c] = r * 16 + f;
+        f++;
+      }
+      if (f !== 8) throw new Error("bad fen row length");
+    }
+    if (this.king[0] < 0 || this.king[1] < 0) throw new Error("no king");
+    this.b = b;
+    this.turn = parts[1] === "b" ? 1 : 0;
+    const c = parts[2] || "-";
+    this.castling = (c.includes("K") ? 1 : 0) | (c.includes("Q") ? 2 : 0) | (c.includes("k") ? 4 : 0) | (c.includes("q") ? 8 : 0);
+    this.ep = parts[3] && parts[3] !== "-" ? sqFromName(parts[3]) : -1;
+    this.half = parseInt(parts[4]) || 0;
+    this.full = parseInt(parts[5]) || 1;
+    this.stack = [];
+    // противник не должен стоять под шахом при своём ходе-не-его
+    if (this.isAttacked(this.king[this.turn ^ 1], this.turn)) throw new Error("illegal position");
+  }
+
+  clone() {
+    const p = Object.create(Position.prototype);
+    p.b = this.b.slice(); p.turn = this.turn; p.castling = this.castling; p.ep = this.ep;
+    p.half = this.half; p.full = this.full; p.king = this.king.slice(); p.stack = [];
+    return p;
+  }
+
+  fen() {
+    let s = "";
+    for (let r = 7; r >= 0; r--) {
+      let e = 0;
+      for (let f = 0; f < 8; f++) {
+        const p = this.b[r * 16 + f];
+        if (!p) { e++; continue; }
+        if (e) { s += e; e = 0; }
+        const ch = TYPE_CH[p & 7];
+        s += (p >> 3) ? ch : ch.toUpperCase();
+      }
+      if (e) s += e;
+      if (r) s += "/";
+    }
+    const c = (this.castling & 1 ? "K" : "") + (this.castling & 2 ? "Q" : "") + (this.castling & 4 ? "k" : "") + (this.castling & 8 ? "q" : "");
+    return `${s} ${this.turn ? "b" : "w"} ${c || "-"} ${this.ep >= 0 ? sqName(this.ep) : "-"} ${this.half} ${this.full}`;
+  }
+  key() { return this.fen().split(" ").slice(0, 4).join(" "); }
+
+  // кто бьёт клетку sq (цвет by). first=true -> boolean, иначе массив клеток-атакующих
+  _att(sq, by, first) {
+    const b = this.b, base = by << 3, out = [];
+    const pd = by === 0 ? [-15, -17] : [15, 17];
+    for (const d of pd) { const s = sq + d; if (!(s & 0x88) && b[s] === (base | 1)) { if (first) return true; out.push(s); } }
+    for (const d of KNIGHT_D) { const s = sq + d; if (!(s & 0x88) && b[s] === (base | 2)) { if (first) return true; out.push(s); } }
+    for (const d of KING_D) { const s = sq + d; if (!(s & 0x88) && b[s] === (base | 6)) { if (first) return true; out.push(s); } }
+    for (const d of BISHOP_D) {
+      let s = sq + d;
+      while (!(s & 0x88)) { const c = b[s]; if (c) { if (c === (base | 3) || c === (base | 5)) { if (first) return true; out.push(s); } break; } s += d; }
+    }
+    for (const d of ROOK_D) {
+      let s = sq + d;
+      while (!(s & 0x88)) { const c = b[s]; if (c) { if (c === (base | 4) || c === (base | 5)) { if (first) return true; out.push(s); } break; } s += d; }
+    }
+    return first ? false : out;
+  }
+  isAttacked(sq, by) { return this._att(sq, by, true); }
+  attackers(sq, by) { return this._att(sq, by, false); }
+  inCheck(color = this.turn) { return this.isAttacked(this.king[color], color ^ 1); }
+
+  pseudo(capsOnly = false) {
+    const us = this.turn, them = us ^ 1, b = this.b, moves = [];
+    const mv = (from, to, piece, cap, promo, flags) => ({ from, to, piece, cap, promo, flags });
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const s = r * 16 + f, p = b[s];
+      if (!p || (p >> 3) !== us) continue;
+      const t = p & 7;
+      if (t === 1) {
+        const dir = us === 0 ? 16 : -16, startR = us === 0 ? 1 : 6, lastR = us === 0 ? 7 : 0;
+        const to1 = s + dir;
+        if (!(to1 & 0x88) && !b[to1]) {
+          if ((to1 >> 4) === lastR) { for (const pr of (capsOnly ? [5] : [5, 4, 3, 2])) moves.push(mv(s, to1, p, 0, pr, 0)); }
+          else if (!capsOnly) {
+            moves.push(mv(s, to1, p, 0, 0, 0));
+            if (r === startR && !b[to1 + dir]) moves.push(mv(s, to1 + dir, p, 0, 0, F_DBL));
+          }
+        }
+        for (const d of [dir - 1, dir + 1]) {
+          const to = s + d; if (to & 0x88) continue;
+          const c = b[to];
+          if (c && (c >> 3) === them) {
+            if ((to >> 4) === lastR) { for (const pr of (capsOnly ? [5] : [5, 4, 3, 2])) moves.push(mv(s, to, p, c, pr, F_CAP)); }
+            else moves.push(mv(s, to, p, c, 0, F_CAP));
+          } else if (!c && to === this.ep) {
+            moves.push(mv(s, to, p, (them << 3) | 1, 0, F_EP | F_CAP));
+          }
+        }
+      } else if (t === 2 || t === 6) {
+        for (const d of (t === 2 ? KNIGHT_D : KING_D)) {
+          const to = s + d; if (to & 0x88) continue;
+          const c = b[to];
+          if (!c) { if (!capsOnly) moves.push(mv(s, to, p, 0, 0, 0)); }
+          else if ((c >> 3) === them) moves.push(mv(s, to, p, c, 0, F_CAP));
+        }
+        if (t === 6 && !capsOnly) {
+          const base = us === 0 ? 0 : 0x70;
+          if (s === base + 4 && !this.isAttacked(s, them)) {
+            if ((this.castling & (us === 0 ? 1 : 4)) && !b[base + 5] && !b[base + 6] && b[base + 7] === ((us << 3) | 4) &&
+              !this.isAttacked(base + 5, them) && !this.isAttacked(base + 6, them)) moves.push(mv(s, base + 6, p, 0, 0, F_CK));
+            if ((this.castling & (us === 0 ? 2 : 8)) && !b[base + 3] && !b[base + 2] && !b[base + 1] && b[base] === ((us << 3) | 4) &&
+              !this.isAttacked(base + 3, them) && !this.isAttacked(base + 2, them)) moves.push(mv(s, base + 2, p, 0, 0, F_CQ));
+          }
+        }
+      } else {
+        const dirs = t === 3 ? BISHOP_D : t === 4 ? ROOK_D : BISHOP_D.concat(ROOK_D);
+        for (const d of dirs) {
+          let to = s + d;
+          while (!(to & 0x88)) {
+            const c = b[to];
+            if (!c) { if (!capsOnly) moves.push(mv(s, to, p, 0, 0, 0)); }
+            else { if ((c >> 3) === them) moves.push(mv(s, to, p, c, 0, F_CAP)); break; }
+            to += d;
+          }
+        }
+      }
+    }
+    return moves;
+  }
+
+  make(m) {
+    const us = this.turn, b = this.b;
+    this.stack.push({ m, castling: this.castling, ep: this.ep, half: this.half, full: this.full });
+    b[m.from] = 0;
+    if (m.flags & F_EP) b[m.to + (us ? 16 : -16)] = 0;
+    b[m.to] = m.promo ? ((us << 3) | m.promo) : m.piece;
+    if ((m.piece & 7) === 6) this.king[us] = m.to;
+    if (m.flags & F_CK) { const base = us ? 0x70 : 0; b[base + 7] = 0; b[base + 5] = (us << 3) | 4; }
+    if (m.flags & F_CQ) { const base = us ? 0x70 : 0; b[base] = 0; b[base + 3] = (us << 3) | 4; }
+    this.castling &= ~(rightsLost(m.from) | rightsLost(m.to));
+    this.ep = (m.flags & F_DBL) ? (m.from + m.to) >> 1 : -1;
+    this.half = ((m.piece & 7) === 1 || m.cap) ? 0 : this.half + 1;
+    if (us) this.full++;
+    this.turn = us ^ 1;
+  }
+
+  unmake() {
+    const s = this.stack.pop(), m = s.m, b = this.b;
+    this.turn ^= 1; const us = this.turn;
+    b[m.from] = m.piece;
+    if (m.flags & F_EP) { b[m.to] = 0; b[m.to + (us ? 16 : -16)] = m.cap; }
+    else b[m.to] = m.cap || 0;
+    if ((m.piece & 7) === 6) this.king[us] = m.from;
+    if (m.flags & F_CK) { const base = us ? 0x70 : 0; b[base + 7] = (us << 3) | 4; b[base + 5] = 0; }
+    if (m.flags & F_CQ) { const base = us ? 0x70 : 0; b[base] = (us << 3) | 4; b[base + 3] = 0; }
+    this.castling = s.castling; this.ep = s.ep; this.half = s.half; this.full = s.full;
+  }
+
+  legalMoves() {
+    const us = this.turn, res = [];
+    for (const m of this.pseudo()) {
+      this.make(m);
+      if (!this.isAttacked(this.king[us], us ^ 1)) res.push(m);
+      this.unmake();
+    }
+    return res;
+  }
+
+  uci(m) { return sqName(m.from) + sqName(m.to) + (m.promo ? TYPE_CH[m.promo] : ""); }
+  findMove(from, to, promo) {
+    const list = this.legalMoves().filter(m => m.from === from && m.to === to);
+    if (!list.length) return null;
+    if (list.length === 1) return list[0];
+    const want = { q: 5, r: 4, b: 3, n: 2 }[promo || "q"];
+    return list.find(m => m.promo === want) || list[0];
+  }
+  fromUci(u) {
+    return this.findMove(sqFromName(u.slice(0, 2)), sqFromName(u.slice(2, 4)), u[4]);
+  }
+
+  // SAN; русские буквы фигур при ru=true
+  san(m, ru) {
+    const letters = ru ? ["", "", "К", "С", "Л", "Ф", "Кр"] : ["", "", "N", "B", "R", "Q", "K"];
+    if (m.flags & F_CK) return this._suffix(m, "O-O");
+    if (m.flags & F_CQ) return this._suffix(m, "O-O-O");
+    const t = m.piece & 7;
+    let s = "";
+    if (t === 1) { if (m.cap) s += FILES[m.from & 7]; }
+    else {
+      s += letters[t];
+      const others = this.legalMoves().filter(x => !(x.from === m.from && x.promo === m.promo) && x.piece === m.piece && x.to === m.to);
+      if (others.length) {
+        const sameFile = others.some(x => (x.from & 7) === (m.from & 7));
+        const sameRank = others.some(x => (x.from >> 4) === (m.from >> 4));
+        if (!sameFile) s += FILES[m.from & 7];
+        else if (!sameRank) s += (m.from >> 4) + 1;
+        else s += sqName(m.from);
+      }
+    }
+    if (m.cap) s += "x";
+    s += sqName(m.to);
+    if (m.promo) s += "=" + letters[m.promo];
+    return this._suffix(m, s);
+  }
+  _suffix(m, s) {
+    this.make(m);
+    let suf = "";
+    if (this.inCheck()) suf = this.legalMoves().length ? "+" : "#";
+    this.unmake();
+    return s + suf;
+  }
+
+  status(repCount = 1) {
+    const moves = this.legalMoves();
+    if (!moves.length) return this.inCheck() ? { over: true, result: "mate", winner: this.turn ^ 1 } : { over: true, result: "stalemate" };
+    if (this.half >= 100) return { over: true, result: "fifty" };
+    if (repCount >= 3) return { over: true, result: "repetition" };
+    if (this.insufficient()) return { over: true, result: "material" };
+    return { over: false };
+  }
+  insufficient() {
+    let minors = 0;
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const t = this.b[r * 16 + f] & 7;
+      if (t === 1 || t === 4 || t === 5) return false;
+      if (t === 2 || t === 3) minors++;
+    }
+    return minors <= 1;
+  }
+  perft(d) {
+    if (d === 0) return 1;
+    let n = 0;
+    for (const m of this.pseudo()) {
+      const us = this.turn;
+      this.make(m);
+      if (!this.isAttacked(this.king[us], us ^ 1)) n += d === 1 ? 1 : this.perft(d - 1);
+      this.unmake();
+    }
+    return n;
+  }
+}
+
+// ===== search.js: оценка + поиск (встроенный движок) =====
+const VAL = [0, 100, 320, 330, 500, 900, 0];
+const MATE = 30000, INF = 32000;
+const PR = [0, 0, 2, 6, 14, 30, 60, 0];
+
+function evaluate(pos) {
+  const b = pos.b; let score = 0, npm = 0;
+  const pf = [new Int8Array(8), new Int8Array(8)], bis = [0, 0], kp = [null, null];
+  for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+    const p = b[r * 16 + f]; if (!p) continue;
+    const c = p >> 3, t = p & 7, rr = c ? 7 - r : r;
+    const cen = 3.5 - Math.max(Math.abs(f - 3.5), Math.abs(r - 3.5));
+    let v = VAL[t];
+    if (t === 1) { v += PR[rr] + (cen >= 2 ? 3 : 0); pf[c][f]++; }
+    else if (t === 2) { v += cen * 9 - ((f === 0 || f === 7) ? 8 : 0); npm += 320; }
+    else if (t === 3) { v += cen * 4; bis[c]++; npm += 330; }
+    else if (t === 4) { v += rr === 6 ? 14 : 0; npm += 500; }
+    else if (t === 5) { v += cen * 2; npm += 900; }
+    else { kp[c] = { rr, cen }; v = 0; }
+    score += c ? -v : v;
+  }
+  const mid = Math.max(0, Math.min(1, (npm - 1500) / 3000));
+  for (let c = 0; c < 2; c++) {
+    const k = kp[c]; if (!k) continue;
+    let v = mid * (-k.cen * 8 + (k.rr === 0 ? 14 : 0)) + (1 - mid) * (k.cen * 10);
+    for (let f = 0; f < 8; f++) if (pf[c][f] > 1) v -= (pf[c][f] - 1) * 12;
+    if (bis[c] >= 2) v += 25;
+    score += c ? -v : v;
+  }
+  return (pos.turn ? -score : score) + 8;
+}
+
+class Searcher {
+  run(pos, o) {
+    this.nodes = 0; this.stopped = false; this.deadline = Date.now() + (o.timeMs || 1000);
+    this.pv = []; for (let i = 0; i < 80; i++) this.pv.push([]);
+    this.killers = []; for (let i = 0; i < 80; i++) this.killers.push([null, null]);
+    let root = pos.legalMoves();
+    if (!root.length) return { lines: [], depth: 0, nodes: 0 };
+    const K = Math.min(o.multipv || 1, root.length), maxDepth = o.maxDepth || 4;
+    root = this.order(root, 0);
+    let done = null, depthDone = 0;
+    for (let d = 1; d <= maxDepth; d++) {
+      const res = this.rootSearch(pos, root, d, K);
+      if (!res) break;
+      done = res; depthDone = d; root = res.order;
+      if (Date.now() > this.deadline) break;
+      if (K === 1 && Math.abs(res.lines[0].score) > MATE - 100) break;
+    }
+    if (!done) { // успели только случайность
+      done = { lines: [{ m: root[0], score: 0, pv: [root[0]] }] };
+    }
+    return {
+      depth: depthDone, nodes: this.nodes,
+      lines: done.lines.map(l => ({ uci: pos.uci(l.m), score: l.score, pv: l.pv.map(x => pos.uci(x)), depth: depthDone }))
+    };
+  }
+
+  rootSearch(pos, moves, d, K) {
+    const out = [];
+    if (K === 1) {
+      let alpha = -INF, best = null;
+      for (const m of moves) {
+        pos.make(m);
+        const sc = -this.neg(pos, d - 1, -INF, -alpha, 1);
+        pos.unmake();
+        if (this.stopped) return null;
+        if (!best || sc > alpha) { alpha = sc; best = { m, score: sc, pv: [m].concat(this.pv[1]) }; }
+      }
+      const order = [best.m].concat(moves.filter(x => x !== best.m));
+      return { lines: [best], order };
+    }
+    for (const m of moves) {
+      pos.make(m);
+      const sc = -this.neg(pos, d - 1, -INF, INF, 1);
+      pos.unmake();
+      if (this.stopped) return null;
+      out.push({ m, score: sc, pv: [m].concat(this.pv[1]) });
+    }
+    out.sort((a, b) => b.score - a.score);
+    return { lines: out.slice(0, K), order: out.map(x => x.m) };
+  }
+
+  order(moves, ply) {
+    const k = this.killers[ply] || [null, null];
+    for (const m of moves) {
+      m.s = m.cap ? 10000 + VAL[m.cap & 7] * 10 - VAL[m.piece & 7] : m.promo ? 9000 + VAL[m.promo]
+        : ((k[0] && k[0].from === m.from && k[0].to === m.to) || (k[1] && k[1].from === m.from && k[1].to === m.to)) ? 5000 : 0;
+    }
+    return moves.sort((a, b) => b.s - a.s);
+  }
+
+  hasPieces(pos, c) {
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const p = pos.b[r * 16 + f]; if (p && (p >> 3) === c && (p & 7) > 1 && (p & 7) < 6) return true;
+    }
+    return false;
+  }
+
+  neg(pos, depth, alpha, beta, ply) {
+    if ((++this.nodes & 1023) === 0 && Date.now() > this.deadline) this.stopped = true;
+    if (this.stopped) return 0;
+    this.pv[ply] = [];
+    if (pos.half >= 100) return 0;
+    const us = pos.turn, inChk = pos.inCheck();
+    if (inChk && ply < 30) depth++;
+    if (depth <= 0) return this.q(pos, alpha, beta, ply);
+    if (!inChk && depth >= 3 && ply > 0 && beta < MATE - 200 && this.hasPieces(pos, us) && evaluate(pos) >= beta) {
+      const ep = pos.ep; pos.turn ^= 1; pos.ep = -1;
+      const sc = -this.neg(pos, depth - 3, -beta, -beta + 1, ply + 1);
+      pos.turn ^= 1; pos.ep = ep;
+      if (this.stopped) return 0;
+      if (sc >= beta) return beta;
+    }
+    const moves = this.order(pos.pseudo(), ply);
+    let legal = 0, best = -INF;
+    for (const m of moves) {
+      pos.make(m);
+      if (pos.isAttacked(pos.king[us], us ^ 1)) { pos.unmake(); continue; }
+      legal++;
+      const sc = -this.neg(pos, depth - 1, -beta, -alpha, ply + 1);
+      pos.unmake();
+      if (this.stopped) return 0;
+      if (sc > best) {
+        best = sc;
+        if (sc > alpha) {
+          alpha = sc; this.pv[ply] = [m].concat(this.pv[ply + 1]);
+          if (alpha >= beta) {
+            if (!m.cap) { const k = this.killers[ply]; k[1] = k[0]; k[0] = m; }
+            break;
+          }
+        }
+      }
+    }
+    if (!legal) return inChk ? -MATE + ply : 0;
+    return best;
+  }
+
+  q(pos, alpha, beta, ply) {
+    if ((++this.nodes & 1023) === 0 && Date.now() > this.deadline) this.stopped = true;
+    if (this.stopped) return 0;
+    const stand = evaluate(pos);
+    if (stand >= beta) return beta;
+    if (stand > alpha) alpha = stand;
+    if (ply >= 60) return alpha;
+    const us = pos.turn;
+    const moves = this.order(pos.pseudo(true), 79);
+    for (const m of moves) {
+      if (!m.promo && stand + VAL[m.cap & 7] + 200 < alpha) continue;
+      pos.make(m);
+      if (pos.isAttacked(pos.king[us], us ^ 1)) { pos.unmake(); continue; }
+      const sc = -this.q(pos, -beta, -alpha, ply + 1);
+      pos.unmake();
+      if (this.stopped) return 0;
+      if (sc >= beta) return beta;
+      if (sc > alpha) alpha = sc;
+    }
+    return alpha;
+  }
+}
+
+function searchFen(fen, maxDepth, timeMs, multipv) {
+  return new Searcher().run(new Position(fen), { maxDepth, timeMs, multipv });
+}
+
+// ===== policy.js: уровень бота по ELO, «человеческие» ошибки =====
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+function kForElo(elo) { return elo >= 2600 ? 1 : elo >= 2200 ? 2 : elo >= 1800 ? 3 : elo >= 1400 ? 4 : 6; }
+function eloLabel(elo) {
+  return elo < 600 ? "новичок" : elo < 900 ? "начинающий" : elo < 1200 ? "любитель" : elo < 1600 ? "средний игрок"
+    : elo < 1900 ? "клубный игрок" : elo < 2300 ? "сильный клубный (КМС)" : elo < 2700 ? "мастер" : "уровень гроссмейстера";
+}
+
+// lines: [{uci, score(cp, с точки зрения ходящего), pv}], отсортированы по убыванию score
+function chooseBotMove(lines, elo, rng, opts) {
+  rng = rng || Math.random; opts = opts || {};
+  const best = lines[0];
+  if (lines.length === 1) return { line: best, loss: 0, kind: "best" };
+  const loss = l => best.score - l.score;
+
+  if (opts.mistake) { // лёгкая «невнимательность»: потеря 0.7–2.8 пешки, но не проигрыш и не мат
+    let c = lines.filter(l => loss(l) >= 70 && loss(l) <= 280 && l.score > -250 && Math.abs(l.score) < 29000);
+    if (!c.length) c = lines.filter(l => loss(l) >= 35 && l.score > -400 && Math.abs(l.score) < 29000);
+    if (c.length) {
+      c.sort((a, b) => Math.abs(loss(a) - 130) - Math.abs(loss(b) - 130));
+      const pick = c[Math.floor(rng() * Math.min(2, c.length))];
+      return { line: pick, loss: loss(pick), kind: "mistake" };
+    }
+    const rest = lines.slice(1).filter(l => l.score > -250 && Math.abs(l.score) < 29000);
+    if (rest.length) { const pick = rest[rest.length - 1]; return { line: pick, loss: loss(pick), kind: "mistake" }; }
+    return { line: best, loss: 0, kind: "best", noMistake: true };
+  }
+  if (best.score > 29000 && elo >= 1200) return { line: best, loss: 0, kind: "best" };
+
+  if (elo < 1000 && lines.length > 1 && rng() < (1000 - elo) / 1000 * 0.22) { // совсем зевок
+    const pick = lines[1 + Math.floor(rng() * (lines.length - 1))];
+    return { line: pick, loss: loss(pick), kind: "slip" };
+  }
+  const t = clamp((elo - 400) / 2600, 0, 1);
+  const temp = 6 + Math.pow(1 - t, 2) * 230;
+  const pool = lines.filter(l => loss(l) <= (elo < 800 ? 900 : 600) && !(l.score < -29000 && best.score > -29000));
+  const w = pool.map(l => Math.exp(-loss(l) / temp));
+  let r = rng() * w.reduce((a, b) => a + b, 0), i = 0;
+  while (i < w.length - 1 && (r -= w[i]) > 0) i++;
+  const pick = pool[i];
+  return { line: pick, loss: loss(pick), kind: loss(pick) < 15 ? "best" : "human" };
+}
+
+// Режим «целевая точность»: бот стремится выиграть, а средняя точность его ходов держится около target (%).
+// n, mean — число и средняя точность уже сыгранных ходов бота.
+function chooseTargetMove(lines, target, n, mean, rng, plies) {
+  rng = rng || Math.random;
+  const best = lines[0];
+  if (lines.length === 1 || best.score >= 29000) return { line: best, loss: 0, kind: "best" };
+  const wb = winPct(best.score);
+  // чтобы партия не тянулась вечно, после ~25 ходов бота постепенно «подтягиваем» точность и добиваем
+  const need = clamp(target * (n + 1) - mean * n + Math.max(0, (plies || 0) - 50) * 1.5, 0, 100);
+  // чем хуже позиция бота, тем меньше он позволяет себе «расслабляться»
+  const floor = wb >= 92 ? 74 : wb >= 80 ? Math.max(62, wb - 20) : wb >= 60 ? wb - 5 : wb - 1.5;
+  const c = lines.map(l => ({ l, w: winPct(l.score) })).filter(x => x.w >= floor && x.l.score > -29000);
+  if (!c.length) return { line: best, loss: 0, kind: "best" };
+  c.forEach(x => { x.acc = moveAccuracy(wb, x.w); x.d = Math.abs(x.acc - need); });
+  c.sort((a, b) => a.d - b.d);
+  const near = c.filter(x => x.d - c[0].d < 5);
+  const pick = near[Math.floor(rng() * near.length)];
+  return { line: pick.l, loss: best.score - pick.l.score, kind: pick.l === best ? "best" : "target" };
+}
+
+// ===== analysis.js: угрозы, пояснения, оценка ходов =====
+const NOM = ["", "пешка", "конь", "слон", "ладья", "ферзь", "король"];
+const ACC = ["", "пешку", "коня", "слона", "ладью", "ферзя", "короля"];
+const GEN = ["", "пешки", "коня", "слона", "ладьи", "ферзя", "короля"];
+const FEM = [false, true, false, false, true, false, false];
+// pr(color, type, "nom"|"acc"|"gen") -> «белый конь»
+function pr(color, t, cs) {
+  const fem = FEM[t];
+  const adjW = { nom: fem ? "белая" : "белый", acc: fem ? "белую" : "белого", gen: fem ? "белой" : "белого" };
+  const adjB = { nom: fem ? "чёрная" : "чёрный", acc: fem ? "чёрную" : "чёрного", gen: fem ? "чёрной" : "чёрного" };
+  const noun = { nom: NOM, acc: ACC, gen: GEN }[cs][t];
+  return (color ? adjB[cs] : adjW[cs]) + " " + noun;
+}
+
+// фигуры цвета color, которым что-то угрожает (под боем и не защищены / бьёт более дешёвая)
+function hanging(pos, color) {
+  const res = [], enemy = color ^ 1;
+  for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+    const sq = r * 16 + f, p = pos.b[sq];
+    if (!p || (p >> 3) !== color || (p & 7) === 6) continue;
+    const att = pos.attackers(sq, enemy);
+    if (!att.length) continue;
+    const def = pos.attackers(sq, color).length;
+    let minV = 1e9, minSq = -1;
+    for (const a of att) { const v = (pos.b[a] & 7) === 6 ? 900 : VAL[pos.b[a] & 7]; if (v < minV) { minV = v; minSq = a; } }
+    const type = p & 7;
+    if (def === 0 || minV < VAL[type] - 10) res.push({ sq, type, color, attackers: att, from: minSq, defended: def > 0 });
+  }
+  return res;
+}
+
+function describeMove(pos, m) {
+  const us = m.piece >> 3, them = us ^ 1, t = m.piece & 7, parts = [];
+  const p2 = pos.clone(); p2.make(m);
+  if (m.flags & 12) parts.push("рокировка: король прячется, ладья включается в игру");
+  else {
+    if (m.cap) parts.push("забирает " + pr(them, m.cap & 7, "acc") + " на " + sqName(m.to));
+    if (m.promo) parts.push("пешка превращается в " + ACC[m.promo]);
+    const home = us ? 7 : 0;
+    if ((t === 2 || t === 3) && (m.from >> 4) === home && (m.to >> 4) !== home && pos.full <= 15) parts.push("развивает " + ACC[t]);
+    if (t === 1 && !m.cap && [0x33, 0x34, 0x43, 0x44].includes(m.to)) parts.push("занимает центр");
+  }
+  if (p2.inCheck()) parts.push(p2.legalMoves().length ? "шах королю" : "мат");
+  const before = new Set(hanging(pos, them).map(h => h.sq));
+  for (const h of hanging(p2, them).filter(h => !before.has(h.sq)).slice(0, 2))
+    parts.push("создаёт угрозу: " + pr(them, h.type, "acc") + " на " + sqName(h.sq) + (h.defended ? " (бьёт дешёвая фигура)" : " без защиты"));
+  const mine = hanging(pos, us), mineAfter = new Set(hanging(p2, us).map(h => h.sq));
+  for (const h of mine.slice(0, 2)) {
+    if (h.sq === m.from) { if (!mineAfter.has(m.to)) parts.push("уводит " + ACC[h.type] + " из-под удара"); }
+    else if (!mineAfter.has(h.sq)) parts.push("защищает " + pr(us, h.type, "acc") + " на " + sqName(h.sq));
+  }
+  if (!parts.length) parts.push("улучшает расположение фигур");
+  return parts;
+}
+
+// cpWhite — оценка с точки зрения белых
+function evalText(cpWhite) {
+  const a = Math.abs(cpWhite);
+  if (a >= 29000) { const n = Math.max(1, Math.ceil((30000 - a) / 2)); return { short: (cpWhite > 0 ? "#" : "-#") + n, words: `мат в ${n} ход${n > 4 ? "ов" : n > 1 ? "а" : ""} у ${cpWhite > 0 ? "белых" : "чёрных"}` }; }
+  const who = cpWhite > 0 ? "белых" : "чёрных";
+  const words = a < 25 ? "позиция равна" : a < 90 ? "небольшое преимущество у " + who : a < 250 ? "заметное преимущество у " + who : a < 600 ? "большое преимущество у " + who : "решающее преимущество у " + who;
+  return { short: (cpWhite >= 0 ? "+" : "−") + (a / 100).toFixed(1), words };
+}
+const winPct = cp => 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * clamp(cp, -1500, 1500))) - 1);
+function moveAccuracy(winBefore, winAfter) {
+  return clamp(103.1668 * Math.exp(-0.04354 * (winBefore - winAfter)) - 3.1669, 0, 100);
+}
+function classifyDrop(drop, isBest) {
+  if (isBest || drop <= 2) return { id: "best", ru: "Отлично", icon: "★" };
+  if (drop <= 5) return { id: "good", ru: "Хорошо", icon: "✓" };
+  if (drop <= 10) return { id: "inacc", ru: "Неточность", icon: "?!" };
+  if (drop <= 20) return { id: "mistake", ru: "Ошибка", icon: "?" };
+  return { id: "blunder", ru: "Зевок", icon: "??" };
+}
+
+// стрелки плана: последовательность ходов (uci) из позиции pos
+function planArrows(pos, pvUci, maxPlies) {
+  const cur = pos.clone(), out = [];
+  for (const u of (pvUci || []).slice(0, maxPlies || 4)) {
+    const m = cur.fromUci(u); if (!m) break;
+    out.push({ from: m.from, to: m.to, side: cur.turn, uci: u, m: m, pos: cur.clone() });
+    cur.make(m);
+  }
+  return out;
+}
+
+// ===== voice_parse.js: русская речь -> ход / команда =====
+const VFILES = { "а": "a", "a": "a", "ай": "a", "эй": "a", "бэ": "b", "бе": "b", "би": "b", "б": "b", "цэ": "c", "це": "c", "си": "c", "ц": "c", "с": "c", "дэ": "d", "де": "d", "ди": "d", "д": "d", "е": "e", "ее": "e", "эе": "e", "эф": "f", "еф": "f", "ф": "f", "гэ": "g", "ге": "g", "джи": "g", "г": "g", "аш": "h", "ха": "h", "хэ": "h", "х": "h", "эйч": "h", "ач": "h" };
+const VFILENAME = { a: "а", b: "бэ", c: "цэ", d: "дэ", e: "е", f: "эф", g: "гэ", h: "аш" };
+const VRANKS = { "один": 1, "раз": 1, "первая": 1, "два": 2, "вторая": 2, "три": 3, "третья": 3, "четыре": 4, "четвертая": 4, "пять": 5, "пятая": 5, "шесть": 6, "шестая": 6, "семь": 7, "седьмая": 7, "восемь": 8, "восьмая": 8 };
+const VRANKNAME = ["", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь"];
+// слова-фигуры -> тип (1=пешка … 6=король)
+const VPIECE = {
+  "пешка": 1, "пешку": 1, "пешкой": 1, "пешечка": 1, "пешки": 1,
+  "конь": 2, "коня": 2, "конем": 2, "кони": 2, "коник": 2, "лошадь": 2, "лошадка": 2, "лошадью": 2,
+  "слон": 3, "слона": 3, "слоном": 3, "офицер": 3, "офицера": 3, "слоны": 3,
+  "ладья": 4, "ладью": 4, "ладьей": 4, "тура": 4, "туру": 4, "турой": 4, "ладьи": 4,
+  "ферзь": 5, "ферзя": 5, "ферзем": 5, "королева": 5, "королеву": 5, "королевой": 5, "дама": 5, "даму": 5, "дамой": 5,
+  "король": 6, "короля": 6, "королем": 6
+};
+const VPNAME = ["", "пешка", "конь", "слон", "ладья", "ферзь", "король"];
+const VPLET = ["", "", "n", "b", "r", "q", ""];
+const VNOISE = new Set(["бьет", "бьёт", "берет", "бери", "взятие", "взять", "возьми", "на", "в", "ход", "ходит", "ходи", "пожалуйста", "шах", "мат", "идет", "пойдет", "поставь", "ставь", "иди", "сходи", "сыграй", "со", "из", "под", "тоже", "потом", "так", "ну", "вот", "и", "а", "x", "х"]);
+// фразы-команды (проверяются по всей фразе)
+const VPHRASES = [
+  [/(новая|новую) парти|начать заново|начни заново|сначала|заново|сброс/, "new"],
+  [/отмен(и|а|ить)|верни( ход)?|откат|назад|отыграй/, "undo"],
+  [/повтор|что (ты )?(сказал|сыграл|ходил)|еще раз|ещё раз|что там/, "repeat"],
+  [/подсказ|подскаж|что делать|лучш(ий|ее) ход|как (мне )?ходить/, "hint"],
+  [/оценк|прогноз|кто выигрывает|кто (побеждает|впереди)|как (дела|позиция)|что по позиции/, "eval"],
+  [/ошибись|зевни|оплошай|сделай ошибку|ошибку допусти|ошибка/, "mistake"],
+  [/перевер|разверн|поверни доску/, "flip"],
+  [/я (играю )?бел/, "white"], [/я (играю )?(черн|чёрн)/, "black"],
+  [/(выход|стоп|хватит|тихо|молчи|не слушай|отбой)/, "quit"]
+];
+
+function vNorm(text) { return String(text || "").toLowerCase().replace(/ё/g, "е").replace(/[,.;:!?()«»"']/g, " ").replace(/[–—−]/g, "-"); }
+// токены: sq | file | rank | piece | word
+function vTokens(text) {
+  const t = vNorm(text).replace(/\b([a-h])\s*([1-8])\b/g, "$1$2").replace(/-/g, " ");
+  const toks = [];
+  for (const w of t.split(/\s+/).filter(Boolean)) {
+    if (/^[a-h][1-8]$/.test(w)) { toks.push({ k: "sq", v: w }); continue; }
+    if (VPIECE[w]) { toks.push({ k: "piece", v: VPIECE[w] }); continue; }
+    if (VRANKS[w] || /^[1-8]$/.test(w)) { toks.push({ k: "rank", v: VRANKS[w] || +w }); continue; }
+    if (VFILES[w]) { toks.push({ k: "file", v: VFILES[w], raw: w }); continue; }
+    let done = false;
+    const m = w.match(/^(.+?)([1-8])$/);
+    if (m && VFILES[m[1]]) { toks.push({ k: "sq", v: VFILES[m[1]] + m[2] }); done = true; }
+    if (!done) for (const rk of Object.keys(VRANKS)) if (w.length > rk.length && w.endsWith(rk) && VFILES[w.slice(0, -rk.length)]) { toks.push({ k: "sq", v: VFILES[w.slice(0, -rk.length)] + VRANKS[rk] }); done = true; break; }
+    if (!done) toks.push({ k: "word", v: w });
+  }
+  // файл + разряд подряд -> клетка
+  const out = [];
+  for (let i = 0; i < toks.length; i++) {
+    const a = toks[i], b = toks[i + 1];
+    if (a.k === "file" && b && b.k === "rank") { out.push({ k: "sq", v: a.v + b.v }); i++; } else out.push(a);
+  }
+  return out;
+}
+function parseVoice(text) {
+  const norm = vNorm(text).trim(); if (!norm) return null;
+  const toks = vTokens(text), words = toks.filter(t => t.k === "word").map(t => t.v);
+  // рокировка
+  const rawNorm = norm.replace(/-/g, " ");
+  const oCount = (rawNorm.match(/(^|\s)(о|o|ноль|0)(?=\s|$)/g) || []).length;
+  if (/рокиров/.test(norm) || oCount >= 2) return { type: "castle", side: (/длинн|ферзев/.test(norm) || oCount >= 3) ? "long" : "short" };
+  const hasSq = toks.some(t => t.k === "sq");
+  if (!hasSq) for (const [re, name] of VPHRASES) if (re.test(norm)) return { type: "cmd", name };
+  else if (hasSq && /^(отмен|назад)/.test(norm)) return { type: "cmd", name: "undo" };
+  const sqs = toks.map((t, i) => ({ t, i })).filter(x => x.t.k === "sq");
+  const piecesAt = toks.map((t, i) => ({ t, i })).filter(x => x.t.k === "piece");
+  if (!sqs.length) return null;
+  const lastSq = sqs[sqs.length - 1].i, promoTok = piecesAt.find(x => x.i > lastSq && x.t.v >= 2 && x.t.v <= 5);
+  const promo = promoTok ? VPLET[promoTok.t.v] : null;
+  const first = sqs[0].i, moverTok = piecesAt.find(x => x.i < first);
+  if (sqs.length >= 2) return { type: "move", from: sqs[0].t.v, to: sqs[1].t.v, promo, piece: moverTok ? moverTok.t.v : null };
+  // только клетка назначения: «конь эф три», «е четыре», «слон бьёт е5»
+  return { type: "dest", to: sqs[0].t.v, piece: moverTok ? moverTok.t.v : null, promo };
+}
+
+// ---- нечёткий разбор: сравниваем с озвучкой всех легальных ходов ----
+function vLev(a, b) {
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = new Array(n + 1), cur = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) { cur[0] = i; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); [prev, cur] = [cur, prev]; }
+  return prev[n];
+}
+const vSqCanon = s => VFILENAME[s[0]] + VRANKNAME[+s[1]];
+function vCanon(text) {
+  let s = "";
+  for (const t of vTokens(text)) {
+    if (t.k === "sq") s += vSqCanon(t.v); else if (t.k === "file") s += VFILENAME[t.v]; else if (t.k === "rank") s += VRANKNAME[t.v];
+    else if (t.k === "piece") s += VPNAME[t.v]; else if (!VNOISE.has(t.v)) s += t.v;
+  }
+  return s;
+}
+// moves: легальные ходы {from,to,piece}; возвращает {move, score, ambiguous}
+function fuzzyMove(text, moves) {
+  const heard = vCanon(text); if (heard.length < 3) return null;
+  const scored = moves.map(m => {
+    const f = vSqCanon(sqName(m.from)), t = vSqCanon(sqName(m.to)), pn = VPNAME[m.piece & 7], pawn = (m.piece & 7) === 1;
+    const forms = [[f + t, 0], [pn + t, 0.02], [pn + f + t, 0.02], [t, pawn ? 0.03 : 0.16]];
+    let best = 9; for (const [c, pen] of forms) best = Math.min(best, vLev(heard, c) / Math.max(heard.length, c.length) + pen);
+    const full = vLev(heard, f + t) / Math.max(heard.length, (f + t).length);
+    return { move: m, score: best, full };
+  }).sort((a, b) => a.score - b.score);
+  const top = scored[0]; if (!top || top.score > 0.34) return null;
+  let close = scored.filter(x => x.score - top.score < 0.07);
+  if (close.length > 1) { // тай-брейк: у кого лучше совпала запись «откуда-куда»
+    const bf = close.slice().sort((a, b) => a.full - b.full);
+    if (bf[1].full - bf[0].full >= 0.06) return { move: bf[0].move, score: bf[0].score };
+  }
+  const sameTarget = close.every(x => x.move.to === top.move.to && (x.move.piece & 7) === (top.move.piece & 7));
+  if (close.length > 1 && !(close.every(x => x.move.from === top.move.from && x.move.to === top.move.to))) return { ambiguous: close.map(x => x.move), sameTarget, score: top.score };
+  return { move: top.move, score: top.score };
+}
+
+// ---- фильтр посторонней речи ----
+const VWAKE = /^\s*(бот|бод|боты|боть|bot|шахматы|помощник)(?=[\s,.:;!-]|$)[\s,.:;!-]*/i;
+function stripWake(text) { const m = String(text || "").match(VWAKE); return m ? { wake: true, text: String(text).slice(m[0].length) } : { wake: false, text: String(text || "") }; }
+// похоже ли на шахматную команду, а не на разговор с другом
+function vChessy(text) {
+  const toks = vTokens(text).filter(t => !(t.k === "word" && VNOISE.has(t.v)));
+  const n = toks.length; if (!n) return false;
+  const norm = vNorm(text);
+  const chess = toks.filter(t => t.k !== "word").length + (/рокиров/.test(norm) ? 1 : 0);
+  if (!chess) return false;
+  if (n <= 3) return true;
+  return n <= 7 && chess / n >= 0.6;
+}
+</script>
+<script>// ===== engine_client.js: Stockfish (если загрузится) или встроенный движок в воркере =====
+class EngineClient {
+  constructor(coreText, onStatus) {
+    this.coreText = coreText; this.onStatus = onStatus || (() => { });
+    this.kind = "mini"; this.seq = 0; this.sfW = null; this.sfBusy = null; this.sfNext = null; this.miniCb = null;
+    this._miniInit(); this._sfInit();
+  }
+  status(t) { this.onStatus(this.kind, t); }
+  // ---------- встроенный ----------
+  _miniInit() {
+    try {
+      const src = this.coreText + "\nonmessage=function(e){var d=e.data;var r=searchFen(d.fen,d.depth,d.timeMs,d.multipv);postMessage({id:d.id,res:r});};";
+      this.miniUrl = URL.createObjectURL(new Blob([src], { type: "text/javascript" }));
+      this._spawn();
+    } catch (e) { this.mini = null; }
+  }
+  _spawn() {
+    try {
+      this.mini = new Worker(this.miniUrl);
+      this.mini.onmessage = e => { const cb = this.miniCb; if (cb && cb.id === e.data.id) { this.miniCb = null; cb.resolve(e.data.res); } };
+      this.mini.onerror = () => { this.mini = null; };
+    } catch (e) { this.mini = null; }
+  }
+  _analyzeMini(fen, o) {
+    return new Promise(resolve => {
+      const id = ++this.seq;
+      if (this.miniCb) { const old = this.miniCb; this.miniCb = null; old.resolve(null); if (this.mini) { this.mini.terminate(); this._spawn(); } }
+      const fin = r => resolve(r ? { lines: r.lines, depth: r.depth, engine: "mini" } : null);
+      if (!this.mini) { setTimeout(() => fin(CORE.searchFen(fen, Math.min(o.depth || 5, 5), Math.min(o.timeMs || 800, 600), o.multipv || 1)), 20); return; }
+      this.miniCb = { id, resolve: fin };
+      this.mini.postMessage({ id, fen, depth: o.depth || 8, timeMs: o.timeMs || 800, multipv: o.multipv || 1 });
+    });
+  }
+  // ---------- Stockfish ----------
+  async _sfInit() {
+    const urls = [
+      "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js",
+      "https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js",
+      "https://unpkg.com/stockfish.js@10.0.2/stockfish.js",
+    ];
+    for (const u of urls) {
+      try { this.sfW = await this._tryWorker(u); break; } catch (e) { /* следующий */ }
+    }
+    if (!this.sfW) { this.kind = "mini"; this.status("Stockfish не загрузился — работает встроенный движок"); return; }
+    this.kind = "sf";
+    this.sfW.onmessage = e => this._sfMsg(typeof e.data === "string" ? e.data : "");
+    this.sfW.postMessage("setoption name Hash value 16");
+    this.status("Stockfish (в браузере)");
+  }
+  _tryWorker(url) {
+    return new Promise((resolve, reject) => {
+      let w;
+      try { w = new Worker(URL.createObjectURL(new Blob(["importScripts(" + JSON.stringify(url) + ");"], { type: "text/javascript" }))); } catch (e) { reject(e); return; }
+      const to = setTimeout(() => { w.terminate(); reject(new Error("timeout")); }, 15000);
+      w.onerror = () => { clearTimeout(to); w.terminate(); reject(new Error("worker error")); };
+      w.onmessage = e => { if (typeof e.data === "string" && e.data.indexOf("uciok") === 0) { clearTimeout(to); w.onmessage = null; w.onerror = null; resolve(w); } };
+      w.postMessage("uci");
+    });
+  }
+  _analyzeSF(fen, o) {
+    return new Promise(resolve => {
+      const req = { fen, o, resolve, info: {}, depth: 0 };
+      if (this.sfBusy) { if (this.sfNext) this.sfNext.resolve(null); this.sfNext = req; this.sfW.postMessage("stop"); }
+      else this._startSF(req);
+    });
+  }
+  _startSF(req) {
+    this.sfBusy = req; const w = this.sfW, t = req.o.timeMs || 900;
+    w.postMessage("setoption name MultiPV value " + (req.o.multipv || 1));
+    w.postMessage("position fen " + req.fen);
+    w.postMessage("go movetime " + t);
+    req.timer = setTimeout(() => this._sfDead(), t + 6000);
+  }
+  _sfMsg(line) {
+    const req = this.sfBusy; if (!req) return;
+    if (line.indexOf("info") === 0 && line.indexOf(" pv ") > 0 && line.indexOf("bound") < 0) {
+      const g = re => { const m = re.exec(line); return m ? m[1] : null; };
+      const idx = +(g(/ multipv (\d+)/) || 1), d = +(g(/ depth (\d+)/) || 0), cp = g(/ score cp (-?\d+)/), mt = g(/ score mate (-?\d+)/);
+      if (cp == null && mt == null) return;
+      const score = cp != null ? +cp : (+mt > 0 ? 30001 - 2 * +mt : -(30001 - 2 * -mt));
+      req.info[idx] = { uci: line.split(" pv ")[1].trim().split(/\s+/)[0], score, pv: line.split(" pv ")[1].trim().split(/\s+/), depth: d };
+      req.depth = Math.max(req.depth, d);
+    } else if (line.indexOf("bestmove") === 0) {
+      clearTimeout(req.timer); this.sfBusy = null;
+      const next = this.sfNext; this.sfNext = null;
+      if (next) { req.resolve(null); this._startSF(next); return; }
+      const lines = Object.keys(req.info).map(Number).sort((a, b) => a - b).map(k => req.info[k]);
+      if (!lines.length) { const bm = line.split(" ")[1]; if (bm && bm !== "(none)") lines.push({ uci: bm, score: 0, pv: [bm], depth: 0 }); }
+      req.resolve(lines.length ? { lines, depth: req.depth, engine: "sf" } : null);
+    }
+  }
+  _sfDead() {
+    const req = this.sfBusy, next = this.sfNext; this.sfBusy = null; this.sfNext = null;
+    try { this.sfW.terminate(); } catch (e) { }
+    this.sfW = null; this.kind = "mini"; this.status("Stockfish завис — переключился на встроенный движок");
+    if (req) this._analyzeMini(req.fen, req.o).then(req.resolve);
+    if (next) this._analyzeMini(next.fen, next.o).then(next.resolve);
+  }
+  analyze(fen, o) { return this.sfW ? this._analyzeSF(fen, o) : this._analyzeMini(fen, o); }
+}
+
+// ===== pieces.js: свои SVG-фигуры (сетка 100x100) =====
+const PIECE_PATHS = {
+  1: '<circle cx="50" cy="30" r="12.5"/><path d="M37 45Q50 38 63 45L60.5 50H39.5Z"/><path d="M41 50C41 60 37 68 32 76H68C63 68 59 60 59 50Z"/>',
+  2: '<path d="M30 76C30 63 34 55 42 48C38 47 34 47 31 50L24 49C23 41 29 33 36 28L38 17L46 23C50 21 56 20 61 22C74 28 76 46 72 58C70 66 70 70 70 76Z"/><path d="M52 25C60 26 68 34 68 47" class="ln"/><circle cx="47" cy="31" r="2.6" class="eye"/><path d="M27 46L33 44" class="ln"/>',
+  3: '<circle cx="50" cy="13.5" r="4.8"/><path d="M50 19C62 27 66 39 60.5 47C58.5 50 56 51.5 56.5 54H43.5C44 51.5 41.5 50 39.5 47C34 39 38 27 50 19Z"/><path d="M36 54H64V60H36Z"/><path d="M41 60H59C60 68 63 72 67 76H33C37 72 40 68 41 60Z"/><path d="M52 26L45 38" class="ln"/>',
+  4: '<path d="M29 15H40V23H45V15H55V23H60V15H71V33L65 38V42H35V38L29 33Z"/><path d="M36 42H64L62 69L68 76H32L38 69Z"/><path d="M29 33H71" class="ln"/>',
+  5: '<path d="M30 66L24 33L31 52L37 25L43.5 49L50 20L56.5 49L63 25L69 52L76 33L70 66Z"/><circle cx="24" cy="30" r="4.2"/><circle cx="37" cy="21.5" r="4.2"/><circle cx="50" cy="16" r="4.2"/><circle cx="63" cy="21.5" r="4.2"/><circle cx="76" cy="30" r="4.2"/><path d="M30 66H70V72H30Z"/><path d="M34 72H66L68 76H32Z"/>',
+  6: '<path d="M46.5 7H53.5V13.5H60V20H53.5V28H46.5V20H40V13.5H46.5Z"/><path d="M50 28C63 28 69 37 66 47C72 54 72 66 70 76H30C28 66 28 54 34 47C31 37 37 28 50 28Z"/><path d="M33 48H67V54H33Z"/>'
+};
+const PIECE_BASE = '<path d="M23 90Q23 83 30 82H70Q77 83 77 90Z"/><path d="M29 82Q29 77.500 35 76.500H65Q71 77.500 71 82Z"/>';
+const PIECE_DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<linearGradient id="gw" gradientUnits="userSpaceOnUse" x1="22" y1="0" x2="78" y2="0"><stop offset="0" stop-color="#cdbb92"/><stop offset=".22" stop-color="#fbf4e2"/><stop offset=".5" stop-color="#eadcb8"/><stop offset="1" stop-color="#a48d5f"/></linearGradient>
+<linearGradient id="gb" gradientUnits="userSpaceOnUse" x1="22" y1="0" x2="78" y2="0"><stop offset="0" stop-color="#2b2420"/><stop offset=".22" stop-color="#6b5d52"/><stop offset=".5" stop-color="#2d2621"/><stop offset="1" stop-color="#0c0908"/></linearGradient>
+${[1, 2, 3, 4, 5, 6].map(t => `<g id="P${t}">${PIECE_BASE}${PIECE_PATHS[t]}</g>`).join("")}
+</defs></svg>`;
+function pieceIcon(code, cls) {
+  return `<svg viewBox="0 0 100 100" class="pcs ${(code >> 3) ? "b" : "w"} ${cls || ""}"><use href="#P${code & 7}" class="body"/></svg>`;
+}
+document.body.insertAdjacentHTML("afterbegin", PIECE_DEFS);
+
+// ===== board.js: SVG-доска с перетаскиванием, анимацией и стрелками =====
+const NS = "http://www.w3.org/2000/svg";
+const el = (name, attrs, parent) => { const e = document.createElementNS(NS, name); for (const k in attrs || {}) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+
+class BoardView {
+  constructor(host, cb) {
+    this.cb = cb; this.flipped = false; this.pos = null; this.legal = new Map(); this.sel = -1;
+    this.pieces = new Map(); this.drag = null; this.opts = {}; this.edit = false; this.brush = null;
+    const svg = this.svg = el("svg", { viewBox: "0 0 8 8", class: "bsvg" });
+    const defs = el("defs", {}, svg);
+    const rg = el("radialGradient", { id: "chk" }, defs);
+    el("stop", { offset: "0", "stop-color": "#ff3b4d", "stop-opacity": ".95" }, rg);
+    el("stop", { offset: ".6", "stop-color": "#ff3b4d", "stop-opacity": ".35" }, rg);
+    el("stop", { offset: "1", "stop-color": "#ff3b4d", "stop-opacity": "0" }, rg);
+    const fl = el("filter", { id: "grain", x: 0, y: 0, width: 1, height: 1 }, defs);
+    el("feTurbulence", { type: "fractalNoise", baseFrequency: ".012 .5", numOctaves: 3, seed: 7, result: "n" }, fl);
+    el("feColorMatrix", { in: "n", type: "matrix", values: "0 0 0 0 .2  0 0 0 0 .12  0 0 0 0 .05  0 0 0 -1.6 1.1" }, fl);
+    this.gSq = el("g", {}, svg); this.gHl = el("g", {}, svg); this.gCo = el("g", { "pointer-events": "none" }, svg);
+    this.gDots = el("g", { "pointer-events": "none" }, svg); this.gPc = el("g", {}, svg);
+    this.gAr = el("g", { "pointer-events": "none" }, svg);
+    host.innerHTML = ""; host.appendChild(svg);
+    this._drawSquares(); this._grain();
+    svg.addEventListener("pointerdown", e => this._down(e));
+    svg.addEventListener("pointermove", e => this._move(e));
+    svg.addEventListener("pointerup", e => this._up(e));
+    svg.addEventListener("pointercancel", e => this._up(e, true));
+  }
+  xy(sq) { const f = sq & 7, r = sq >> 4; return { x: this.flipped ? 7 - f : f, y: this.flipped ? r : 7 - r }; }
+  sqAt(e) {
+    const rc = this.svg.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rc.left) / rc.width * 8), y = Math.floor((e.clientY - rc.top) / rc.height * 8);
+    if (x < 0 || x > 7 || y < 0 || y > 7) return -1;
+    return this.flipped ? (y * 16 + (7 - x)) : ((7 - y) * 16 + x);
+  }
+  setFlipped(v) { this.flipped = v; this._drawSquares(); if (this.pos) this.render(this.pos, this.opts, true); }
+  _drawSquares() {
+    this.gSq.innerHTML = ""; this.gCo.innerHTML = "";
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const sq = r * 16 + f, { x, y } = this.xy(sq), light = (r + f) % 2 === 1;
+      el("rect", { x, y, width: 1, height: 1, class: light ? "sq l" : "sq d" }, this.gSq);
+      if (y === 7) { const t = el("text", { x: x + .92, y: y + .93, class: "co " + (light ? "cd" : "cl"), "text-anchor": "end" }, this.gCo); t.textContent = "abcdefgh"[f]; }
+      if (x === 0) { const t = el("text", { x: x + .07, y: y + .22, class: "co " + (light ? "cd" : "cl") }, this.gCo); t.textContent = r + 1; }
+    }
+  }
+  _grain() { if (!this.gGr) { this.gGr = el("rect", { x: 0, y: 0, width: 8, height: 8, filter: "url(#grain)", opacity: .6, "pointer-events": "none" }); this.svg.insertBefore(this.gGr, this.gHl); } }
+  // opts: {last:[from,to], legal:Map, arrows:[{from,to,color,w,o}], interactive}
+  render(pos, opts, noAnim) {
+    this.pos = pos; this.opts = opts || {}; this.legal = this.opts.legal || new Map();
+    if (this.sel >= 0 && !this.edit && !this.legal.has(this.sel)) this.sel = -1;
+    this._sync(pos, noAnim); this._hl(); this._dots(); this._arrows();
+  }
+  _create(code, sq) {
+    const g = el("g", { class: "pc " + ((code >> 3) ? "b" : "w") });
+    el("ellipse", { cx: .5, cy: .86, rx: .3, ry: .065, class: "shd" }, g);
+    const lift = g._lift = el("g", {}, g);
+    const inner = el("g", { transform: "translate(.06 .02) scale(.0088)" }, lift);
+    const u = el("use", { class: "body" }, inner); u.setAttribute("href", "#P" + (code & 7));
+    const { x, y } = this.xy(sq); this._setXY(g, x, y);
+    this.gPc.appendChild(g);
+    return g;
+  }
+  _setXY(g, x, y) { g._x = x; g._y = y; g.setAttribute("transform", `translate(${x.toFixed(4)} ${y.toFixed(4)})`); }
+  _liftSet(g, s) { g._lift.setAttribute("transform", s === 1 ? "" : `translate(.5 .86) scale(${s}) translate(-.5 -.86)`); }
+  _place(g, sq, instant) {
+    const { x, y } = this.xy(sq);
+    if (g._raf) { cancelAnimationFrame(g._raf); g._raf = 0; }
+    if (instant || g._x == null) { this._setXY(g, x, y); return; }
+    const x0 = g._x, y0 = g._y, dx = x - x0, dy = y - y0, d = Math.hypot(dx, dy);
+    if (d < .001) return;
+    this.gPc.appendChild(g);
+    const dur = Math.min(420, 170 + d * 70), t0 = performance.now();
+    const step = now => {
+      let t = Math.min(1, (now - t0) / dur); const e = 1 - Math.pow(1 - t, 3);
+      this._setXY(g, x0 + dx * e, y0 + dy * e);
+      g._raf = t < 1 ? requestAnimationFrame(step) : 0;
+    };
+    g._raf = requestAnimationFrame(step);
+  }
+  _sync(pos, noAnim) {
+    const now = new Map();
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const s = r * 16 + f; if (pos.b[s]) now.set(s, pos.b[s]); }
+    const keep = new Map(), loose = [];
+    for (const [sq, o] of this.pieces) { if (now.get(sq) === o.code) keep.set(sq, o); else loose.push({ sq, ...o }); }
+    for (const [sq, code] of now) {
+      if (keep.has(sq)) continue;
+      let bi = -1, bd = 1e9;
+      loose.forEach((l, i) => { if (l.code === code) { const d = Math.abs((l.sq >> 4) - (sq >> 4)) + Math.abs((l.sq & 7) - (sq & 7)); if (d < bd) { bd = d; bi = i; } } });
+      if (bi >= 0) { const l = loose.splice(bi, 1)[0]; keep.set(sq, { el: l.el, code }); }
+      else keep.set(sq, { el: this._create(code, sq), code, born: true });
+    }
+    for (const l of loose) { l.el.style.opacity = 0; l.el.style.pointerEvents = "none"; setTimeout(() => l.el.remove(), 260); }
+    this.pieces = keep;
+    for (const [sq, o] of keep) {
+      o.el.classList.remove("drag"); this._liftSet(o.el, 1);
+      this._place(o.el, sq, !!noAnim);
+      o.el.style.opacity = 1;
+    }
+  }
+  _hl() {
+    const g = this.gHl; g.innerHTML = "";
+    const sq = (s, cls) => { const { x, y } = this.xy(s); el("rect", { x, y, width: 1, height: 1, class: cls }, g); };
+    if (this.opts.last) { sq(this.opts.last[0], "hl last"); sq(this.opts.last[1], "hl last"); }
+    if (this.sel >= 0) sq(this.sel, "hl sel");
+    if (this.pos && this.pos.inCheck()) { const { x, y } = this.xy(this.pos.king[this.pos.turn]); el("circle", { cx: x + .5, cy: y + .5, r: .62, fill: "url(#chk)" }, g); }
+    if (this.hover >= 0 && this.hover != null && this.drag && this.drag.moved && this.legal.get(this.drag.sq) && this.legal.get(this.drag.sq).has(this.hover)) sq(this.hover, "hl hov");
+  }
+  _dots() {
+    const g = this.gDots; g.innerHTML = "";
+    if (this.sel < 0) return;
+    const tg = this.legal.get(this.sel); if (!tg) return;
+    for (const t of tg) {
+      const { x, y } = this.xy(t);
+      if (this.pos.b[t]) el("circle", { cx: x + .5, cy: y + .5, r: .46, class: "ring" }, g);
+      else el("circle", { cx: x + .5, cy: y + .5, r: .17, class: "dot" }, g);
+    }
+  }
+  _arrows() {
+    const g = this.gAr; g.innerHTML = "";
+    for (const a of (this.opts.arrows || [])) this._arrow(g, a);
+  }
+  _arrow(g, a) {
+    const f = this.xy(a.from), t = this.xy(a.to);
+    let x1 = f.x + .5, y1 = f.y + .5, x2 = t.x + .5, y2 = t.y + .5;
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy); if (len < .1) return;
+    const ux = dx / len, uy = dy / len, nx = -uy, ny = ux, w = a.w || .15, hw = w * 1.9, hl = Math.min(.4, len * .55);
+    x1 += ux * .22; y1 += uy * .22; x2 -= ux * .1; y2 -= uy * .1;
+    const bx = x2 - ux * hl, by = y2 - uy * hl;
+    const pts = [[x1 + nx * w / 2, y1 + ny * w / 2], [bx + nx * w / 2, by + ny * w / 2], [bx + nx * hw, by + ny * hw], [x2, y2], [bx - nx * hw, by - ny * hw], [bx - nx * w / 2, by - ny * w / 2], [x1 - nx * w / 2, y1 - ny * w / 2]];
+    el("polygon", { points: pts.map(p => p[0].toFixed(3) + "," + p[1].toFixed(3)).join(" "), fill: a.color, opacity: a.o == null ? .8 : a.o, class: "arw" }, g);
+  }
+  // ---- ввод ----
+  _pt(e) { const rc = this.svg.getBoundingClientRect(); return { x: (e.clientX - rc.left) / rc.width * 8, y: (e.clientY - rc.top) / rc.height * 8 }; }
+  _down(e) {
+    if (!this.opts.interactive || e.button > 0) return;
+    const sq = this.sqAt(e); if (sq < 0) return;
+    const hap = k => this.cb.haptic && this.cb.haptic(k);
+    if (this.edit) {
+      if (this.brush != null) { this.cb.onEdit({ set: sq, code: this.brush }); hap("select"); return; }
+      if (this.sel >= 0 && sq !== this.sel) { const f = this.sel; this.sel = -1; this.cb.onEdit({ move: [f, sq] }); hap("select"); return; }
+      const o = this.pieces.get(sq);
+      if (o) {
+        this.sel = sq; hap("select");
+        this.drag = { sq, o, id: e.pointerId, moved: false, sx: e.clientX, sy: e.clientY, touch: e.pointerType !== "mouse", edit: true };
+        this.hover = sq; this.svg.setPointerCapture(e.pointerId); this.gPc.appendChild(o.el);
+        this._hl(); this._dots();
+      } else { this.sel = -1; this._hl(); }
+      return;
+    }
+    const tg = this.legal.get(this.sel);
+    if (this.sel >= 0 && tg && tg.has(sq)) { this._commit(this.sel, sq); return; }
+    const o = this.pieces.get(sq);
+    if (o && this.legal.has(sq)) {
+      this.sel = sq; hap("select");
+      this.drag = { sq, o, id: e.pointerId, moved: false, sx: e.clientX, sy: e.clientY, touch: e.pointerType !== "mouse" };
+      this.hover = sq; this.svg.setPointerCapture(e.pointerId); this.gPc.appendChild(o.el);
+      this._hl(); this._dots();
+    } else { this.sel = -1; this._hl(); this._dots(); }
+  }
+  _move(e) {
+    const d = this.drag; if (!d || e.pointerId !== d.id) return;
+    if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 7) return;
+    if (!d.moved) { d.moved = true; d.o.el.classList.add("drag"); if (d.o.el._raf) { cancelAnimationFrame(d.o.el._raf); d.o.el._raf = 0; } this._liftSet(d.o.el, 1.22); }
+    const p = this._pt(e), lift = d.touch ? .6 : 0;
+    this._setXY(d.o.el, p.x - .5, p.y - .5 - lift);
+    const h = this.sqAt(e); if (h !== this.hover) { this.hover = h; this._hl(); }
+  }
+  _up(e, cancel) {
+    const d = this.drag; if (!d || e.pointerId !== d.id) return;
+    this.drag = null; try { this.svg.releasePointerCapture(e.pointerId); } catch (x) { }
+    d.o.el.classList.remove("drag"); this._liftSet(d.o.el, 1);
+    const to = cancel ? -1 : this.sqAt(e);
+    if (d.edit) {
+      if (d.moved) {
+        if (cancel) { this.sel = -1; this._place(d.o.el, d.sq); this._hl(); return; }
+        const rc = this.svg.getBoundingClientRect(), out = e.clientX < rc.left - 8 || e.clientX > rc.right + 8 || e.clientY < rc.top - 8 || e.clientY > rc.bottom + 8;
+        this.sel = -1;
+        if (out) { this.cb.onEdit({ remove: d.sq }); return; }
+        if (to >= 0 && to !== d.sq) { this.cb.onEdit({ move: [d.sq, to] }); return; }
+        this._place(d.o.el, d.sq); this._hl(); return;
+      }
+      this._place(d.o.el, d.sq); this._hl(); return; // тап: выделено, следующий тап — перенос
+    }
+    const tg = this.legal.get(d.sq);
+    if (d.moved) {
+      if (to >= 0 && to !== d.sq && tg && tg.has(to)) { this._commit(d.sq, to); return; }
+      this.sel = -1; this._place(d.o.el, d.sq); this._hl(); this._dots(); return;
+    }
+    this._place(d.o.el, d.sq); this._hl(); this._dots(); // тап: оставляем выделение
+  }
+  _commit(from, to) {
+    this.sel = -1; this.hover = -1;
+    const r = this.cb.onMove(from, to);
+    if (r === false) { this._sync(this.pos); this._hl(); this._dots(); }
+  }
+  clearSel() { this.sel = -1; this._hl(); this._dots(); }
+}
+
+// ===== app.js: интерфейс и логика партии =====
+const CORE_TEXT = document.getElementById("core-src").textContent;
+const CORE = new Function(CORE_TEXT + "\nreturn {Position,START_FEN,sqName,sqFromName,searchFen,chooseBotMove,chooseTargetMove,kForElo,eloLabel,hanging,describeMove,evalText,winPct,moveAccuracy,classifyDrop,planArrows,pr,parseVoice,fuzzyMove,stripWake,vChessy,NOM,ACC};")();
+const { Position, START_FEN, sqName, sqFromName, chooseBotMove, chooseTargetMove, fuzzyMove, stripWake, vChessy, kForElo, eloLabel, hanging, describeMove, evalText, winPct, moveAccuracy, classifyDrop, planArrows, pr, parseVoice, NOM, ACC } = CORE;
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const FR = { a: "а", b: "бэ", c: "цэ", d: "дэ", e: "е", f: "эф", g: "гэ", h: "аш" }, RR = ["", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь"];
+
+// ---------- настройки ----------
+const DEF = { elo: 1500, mode: "vs", color: "w", speak: true, speakWhy: false, haptic: true, sound: true, lvl: "elo", wakeAll: false, tgt: 71, odds: "none", voice: "", pitch: 0.8, rate: 0.95, layers: { best: true, plans: true, threatsMe: true, myThreats: true } };
+const cfg = JSON.parse(JSON.stringify(DEF));
+try { const s = JSON.parse(localStorage.getItem("cg2") || "{}"); Object.assign(cfg, s); cfg.layers = Object.assign({}, DEF.layers, s.layers || {}); } catch (e) { }
+const save = () => { try { localStorage.setItem("cg2", JSON.stringify(cfg)); } catch (e) { } };
+const myC = () => cfg.color === "w" ? 0 : 1;
+const botC = () => cfg.mode === "vs" ? myC() ^ 1 : cfg.mode === "assist" ? myC() : -1;
+const nameOf = c => cfg.mode === "vs" ? (c === botC() ? "Бот" : "Ты") : cfg.mode === "assist" ? (c === botC() ? "Бот (за тебя)" : "Соперник") : (c ? "Чёрные" : "Белые");
+
+// ---------- партия ----------
+class Game {
+  constructor() { this.reset(); }
+  reset(fen) {
+    this.pos = new Position(fen); this.startFen = this.pos.fen(); this.moves = []; this.redo = []; this.keys = [this.pos.key()];
+    this.startTurn = this.pos.turn; this.startFull = this.pos.full;
+  }
+  play(m, desc) {
+    const e = { m, by: m.piece >> 3, san: this.pos.san(m, true), sanEn: this.pos.san(m, false), uci: this.pos.uci(m), keyBefore: this.pos.key(), fenBefore: this.pos.fen(), desc: desc || [], cls: null, acc: null };
+    this.pos.make(m); this.moves.push(e); this.keys.push(this.pos.key()); this.redo = []; return e;
+  }
+  undo() { const e = this.moves.pop(); if (!e) return null; this.pos.unmake(); this.keys.pop(); this.redo.push(e); return e; }
+  redoMove() { const e = this.redo.pop(); if (!e) return null; this.pos.make(e.m); this.moves.push(e); this.keys.push(this.pos.key()); return e; }
+  rep() { const k = this.keys[this.keys.length - 1]; return this.keys.filter(x => x === k).length; }
+  status() { return this.pos.status(this.rep()); }
+  pgn() {
+    let s = "";
+    this.moves.forEach((e, i) => { const side = (this.startTurn + i) % 2, n = this.startFull + Math.floor((this.startTurn + i) / 2); if (side === 0) s += n + ". "; else if (i === 0) s += n + "... "; s += e.sanEn + " "; });
+    return (this.startFen !== START_FEN ? `[SetUp "1"]\n[FEN "${this.startFen}"]\n\n` : "") + s.trim();
+  }
+}
+const game = new Game();
+const cache = new Map();      // key -> {lines, K, depth}
+const S = { edit: false, hint: false, cur: null, armed: false, hold: false, thinking: false, over: false, overClosed: false, lastSpoken: "" };
+let token = 0, listening = false, rec = null, speaking = false;
+
+// ---------- доска ----------
+// ---------- отклик: вибрация и звук ----------
+const hapEl = document.createElement("label");
+hapEl.style.cssText = "position:fixed;left:-80px;top:-80px;width:40px;height:40px;opacity:.01;pointer-events:none";
+hapEl.innerHTML = '<input type="checkbox" switch>'; document.body.appendChild(hapEl);
+function tick() { try { if (navigator.vibrate) navigator.vibrate(14); else hapEl.click(); } catch (e) { } }
+function haptic(kind) { if (!cfg.haptic) return; const n = { select: 1, move: 1, capture: 2, check: 3, mate: 4 }[kind] || 1; for (let i = 0; i < n; i++) setTimeout(tick, i * 85); }
+let AC = null;
+function sound(kind) {
+  if (!cfg.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume();
+    const knock = (at, vol, freq) => {
+      const len = Math.floor(AC.sampleRate * .09), buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      const s = AC.createBufferSource(); s.buffer = buf; const f = AC.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = freq; f.Q.value = 1.2;
+      const g = AC.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(AC.destination); s.start(AC.currentTime + at);
+    };
+    if (kind === "capture") { knock(0, 1.7, 700); knock(.07, 1.2, 520); } else if (kind === "check" || kind === "mate") { knock(0, 1.4, 800); knock(.13, 1.7, 1100); } else knock(0, 1.2, 650);
+  } catch (e) { }
+}
+function feedback(m, san) {
+  const kind = /#/.test(san) ? "mate" : /\+/.test(san) ? "check" : (m.cap || (m.flags & 2)) ? "capture" : "move";
+  haptic(kind); sound(kind);
+}
+let wl = null;
+async function wake() { try { if (navigator.wakeLock && !wl) { wl = await navigator.wakeLock.request("screen"); wl.addEventListener("release", () => { wl = null; }); } } catch (e) { } }
+document.addEventListener("pointerdown", wake, { passive: true }); document.addEventListener("visibilitychange", () => { if (!document.hidden) wake(); });
+
+const view = new BoardView($("board"), { onMove: (f, t) => tryMove(f, t), onEdit: ev => editEvent(ev), haptic: k => haptic(k) });
+view.setFlipped(cfg.color === "b");
+const eng = new EngineClient(CORE_TEXT, (kind, text) => { const c = $("engChip"); c.textContent = kind === "sf" ? "Stockfish ✓" : "встроенный движок"; c.title = text; c.className = "chip " + (kind === "sf" ? "ok" : "warn"); $("engInfo").textContent = kind === "sf" ? "Stockfish" : "встроенный движок"; });
+$("engChip").textContent = "грузится Stockfish…";
+
+function toast(t, ms) { const e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("on"), ms || 2600); }
+
+function legalMap() {
+  const m = new Map(); if (S.over) return m;
+  for (const mv of game.pos.legalMoves()) { if (!m.has(mv.from)) m.set(mv.from, new Set()); m.get(mv.from).add(mv.to); }
+  return m;
+}
+function whiteEval() { if (!S.cur) return null; const s = S.cur.lines[0].score; return game.pos.turn === 0 ? s : -s; }
+
+function buildArrows() {
+  const out = [], pos = game.pos, L = cfg.layers, A = S.cur;
+  if (S.over) return out;
+  if (A) {
+    const owner = botC() >= 0 ? botC() : myC();
+    if (L.best || S.hint) { const u = A.lines[0].uci; out.push({ from: sqFromName(u.slice(0, 2)), to: sqFromName(u.slice(2, 4)), color: "#4f9a3c", w: .2, o: .9 }); }
+    if (L.plans) planArrows(pos, A.lines[0].pv, 4).forEach((a, i) => {
+      if (i === 0 && (L.best || S.hint)) return;
+      out.push({ from: a.from, to: a.to, color: a.side === owner ? "#2f6fc4" : "#e0841f", w: .13, o: Math.max(.35, .8 - i * .15) });
+    });
+  }
+  if (L.threatsMe) hanging(pos, myC()).forEach(h => out.push({ from: h.from, to: h.sq, color: "#c8372d", w: .12, o: .85 }));
+  if (L.myThreats) hanging(pos, myC() ^ 1).forEach(h => out.push({ from: h.from, to: h.sq, color: "#1f8fa0", w: .12, o: .85 }));
+  return out;
+}
+function renderBoard(noAnim) {
+  const last = game.moves[game.moves.length - 1];
+  view.render(game.pos, { last: last ? [last.m.from, last.m.to] : null, legal: legalMap(), arrows: buildArrows(), interactive: true }, noAnim);
+}
+function renderBars() {
+  const top = view.flipped ? 0 : 1, bot = top ^ 1;
+  const fill = (id, c) => {
+    const b = $(id); b.querySelector(".dot").className = "dot" + (c ? " b" : "");
+    b.querySelector("b").textContent = nameOf(c);
+    b.querySelector(".sub").textContent = c === botC() ? (cfg.lvl === "acc" ? "цель " + cfg.tgt + "%" : "ELO " + cfg.elo) : "";
+    const ms = game.moves.filter(e => e.by === c && e.acc != null);
+    b.querySelector(".acc").textContent = ms.length ? "точность " + Math.round(ms.reduce((a, e) => a + e.acc, 0) / ms.length) + "%" : "";
+    const val = { 1: 1, 2: 3, 3: 3, 4: 5, 5: 9 }, mt = [0, 0];
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const p = game.pos.b[r * 16 + f]; if (p && (p & 7) !== 6) mt[p >> 3] += val[p & 7]; }
+    const dm = mt[c] - mt[c ^ 1]; b.querySelector(".mat").textContent = dm > 0 ? "+" + dm : "";
+    b.classList.toggle("turn", !S.over && game.pos.turn === c);
+    b.querySelector(".think").classList.toggle("on", S.thinking && game.pos.turn === c);
+  };
+  fill("barTop", top); fill("barBot", bot); renderBubble();
+}
+function renderEval() {
+  const ev = whiteEval(), fillEl = $("evalFill"), num = $("evalNum");
+  const pct = ev == null ? 50 : winPct(ev), wl = !view.flipped;
+  fillEl.style.width = pct + "%"; fillEl.style.left = wl ? "0" : "auto"; fillEl.style.right = wl ? "auto" : "0";
+  const t = ev == null ? { short: "·" } : evalText(ev);
+  num.textContent = t.short.replace("+", "");
+  const whiteBig = pct >= 50, atLeft = whiteBig === wl;
+  num.style.left = atLeft ? "8px" : "auto"; num.style.right = atLeft ? "auto" : "8px";
+  num.style.color = whiteBig ? "#3b2a0a" : "#f3e9ff";
+  $("forecast").textContent = forecastText();
+}
+function forecastText() {
+  const ev = whiteEval(); if (S.over) return overText(); if (ev == null) return "Считаю прогноз…";
+  const t = evalText(ev), w = winPct(ev);
+  if (Math.abs(ev) >= 29000) { const n = Math.max(1, Math.ceil((30000 - Math.abs(ev)) / 2)); return `Прогноз: мат в ${n} ${n === 1 ? "ход" : n < 5 ? "хода" : "ходов"} у ${ev > 0 ? "белых" : "чёрных"} при точной игре`; }
+  return `Прогноз: белые ${Math.round(w)}% · чёрные ${Math.round(100 - w)}% — ${t.words}`;
+}
+function renderBubble() {
+  const last = game.moves[game.moves.length - 1], b = $("bubble"); let t;
+  if (S.edit) t = "Редактор: двигай фигуры, ставь новые из набора, убирай. Потом жми «Начать партию».";
+  else if (S.over) t = overText();
+  else if (S.thinking && game.pos.turn === botC()) t = "Думаю…";
+  else if (S.armed && game.pos.turn === botC()) t = "Ладно, сейчас чуть зазеваюсь 🫣";
+  else if (last) { t = `${nameOf(last.by)}: ${last.san} — ${last.desc.join(", ")}.`; if (last.cls && last.cls.id !== "good" && last.cls.id !== "best") t += ` ${last.cls.icon} ${last.cls.ru}.`; }
+  else t = botC() >= 0 ? "Привет! Двигай фигуру пальцем — я отвечу." : "Свободная доска: двигай любые фигуры, я подскажу.";
+  if (b.textContent !== t) { b.textContent = t; b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); }
+}
+function verdict(a) { return a >= 92 ? "почти как движок" : a >= 82 ? "играет точно" : a >= 70 ? "играет уверенно" : a >= 55 ? "много неточностей" : "играет слабо"; }
+function renderStats() {
+  const one = c => {
+    const ms = game.moves.filter(e => e.by === c && e.acc != null), n = id => ms.filter(e => e.cls && e.cls.id === id).length;
+    const acc = ms.length ? ms.reduce((a, e) => a + e.acc, 0) / ms.length : null;
+    return `<div><small>${esc(nameOf(c))}</small><b>${acc == null ? "—" : Math.round(acc) + "%"}</b><small>${acc == null ? "ходов пока нет" : verdict(acc)}</small><small>неточн. ${n("inacc")} · ошибок ${n("mistake")} · зевков ${n("blunder")}</small><div class="bar"><i style="width:${acc == null ? 0 : acc}%"></i></div></div>`;
+  };
+  $("stats").innerHTML = one(myC()) + one(myC() ^ 1);
+  // график оценки
+  const pts = [];
+  let prev = 50;
+  game.keys.forEach((k, i) => {
+    const c = cache.get(k); let w = prev;
+    if (c) { const s = c.lines[0].score, turnW = k.split(" ")[1] === "w"; w = winPct(turnW ? s : -s); }
+    prev = w; pts.push(w);
+  });
+  const n = Math.max(1, pts.length - 1);
+  const d = pts.map((w, i) => (pts.length === 1 ? 0 : i / n * 100).toFixed(1) + "," + (30 - w * .3).toFixed(1)).join(" ");
+  $("spark").innerHTML = `<line x1="0" x2="100" y1="15" y2="15" stroke="#4a3a2a" stroke-width=".6" stroke-dasharray="2 2"/><polyline points="${d}" fill="none" stroke="#c9a45c" stroke-width="1.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+}
+function renderMoves() {
+  let h = "";
+  game.moves.forEach((e, i) => {
+    const side = (game.startTurn + i) % 2, n = game.startFull + Math.floor((game.startTurn + i) / 2);
+    if (side === 0) h += `<span class="mv n">${n}.</span>`; else if (i === 0) h += `<span class="mv n">${n}…</span>`;
+    h += `<span class="mv ${e.cls ? e.cls.id : ""}">${esc(e.san)}${e.cls && ["inacc", "mistake", "blunder"].includes(e.cls.id) ? `<i>${e.cls.icon}</i>` : ""}</span>`;
+  });
+  $("moves").innerHTML = h || '<span class="small">пока пусто</span>';
+  const mv = $("moves"); mv.scrollTop = mv.scrollHeight;
+}
+function renderCoach() {
+  const pos = game.pos, out = [], last = game.moves[game.moves.length - 1];
+  if (last) {
+    let l = `<b>${esc(nameOf(last.by))}: ${esc(last.san)}</b> — ${esc(last.desc.join(", "))}.`;
+    if (last.cls) l += `<span class="badge ${last.cls.id}">${last.cls.icon} ${last.cls.ru}</span>`;
+    out.push(`<p>${l}</p>`);
+    if (last.cls && ["inacc", "mistake", "blunder"].includes(last.cls.id) && last.bestSan) out.push(`<p class="k">Лучше было <b>${esc(last.bestSan)}</b>.</p>`);
+    if (last.botMistake) out.push(`<p class="k">🫣 Это намеренная «невнимательность» бота: ход слабее лучшего на ${(last.botMistake.loss / 100).toFixed(1)} пешки (лучший — ${esc(last.botMistake.bestSan)}).</p>`);
+  } else out.push(`<p>Партия началась. Двигай фигуры пальцем (можно любые, за любую сторону) или диктуй ход.</p>`);
+  if (S.over) { out.push(`<p><b>${esc(overText())}</b></p>`); $("coach").innerHTML = out.join(""); return; }
+  if (pos.inCheck()) out.push(`<p>⚠️ ${esc(nameOf(pos.turn))} под шахом.</p>`);
+  if (S.cur) {
+    const t = evalText(whiteEval());
+    out.push(`<p><span class="k">Оценка:</span> <b>${t.short}</b> — ${t.words}.</p>`);
+    const thr = h => `${pr(h.color, h.type, "nom")} ${sqName(h.sq)} ← ${pr(h.color ^ 1, pos.b[h.from] & 7, "nom")} ${sqName(h.from)}${h.defended ? "" : ", без защиты"}`;
+    const me = myC(), th = hanging(pos, me), my = hanging(pos, me ^ 1);
+    if (th.length) out.push(`<p><span class="tag" style="background:var(--bad)"></span><b>Тебе угрожают:</b> ${th.slice(0, 3).map(thr).join("; ")}.</p>`);
+    if (my.length) out.push(`<p><span class="tag" style="background:var(--teal)"></span><b>Ты угрожаешь:</b> ${my.slice(0, 3).map(thr).join("; ")}.</p>`);
+    const plan = planArrows(pos, S.cur.lines[0].pv, 3);
+    if (plan.length) {
+      const owner = botC() >= 0 ? botC() : myC(), col = a => a.side === owner ? "var(--acc)" : "var(--org)";
+      const txt = plan.map((a, i) => `<span class="tag" style="background:${col(a)}"></span>${i === 0 ? "" : i === 1 ? "ответ: " : "затем: "}<b>${esc(a.pos.san(a.m, true))}</b> <span class="k">(${esc(nameOf(a.side))}: ${esc(describeMove(a.pos, a.m).join(", "))})</span>`).join("<br>");
+      out.push(`<p><b>Ближайший план:</b><br>${txt}</p>`);
+    }
+    if (S.hold && game.pos.turn === botC()) out.push(`<p><button class="pill on" id="bGo">▶ Пусть бот сходит</button></p>`);
+  } else out.push(`<p class="k">Анализирую позицию…</p>`);
+  $("coach").innerHTML = out.join("");
+  const g = $("bGo"); if (g) g.onclick = () => { S.hold = false; afterChange(); };
+}
+function overText() {
+  const s = game.status();
+  return s.result === "mate" ? "Мат. Победили " + (s.winner ? "чёрные" : "белые") : s.result === "stalemate" ? "Пат — ничья" : s.result === "fifty" ? "Ничья по правилу 50 ходов" : s.result === "repetition" ? "Ничья: трёхкратное повторение" : "Ничья: недостаточно материала";
+}
+function renderToolbar() {
+  $("bHint").disabled = S.over || S.edit; $("bEdit").classList.toggle("on", S.edit);
+  $("bUndo").disabled = !game.moves.length; $("bRedo").disabled = !game.redo.length;
+  $("bMistake").classList.toggle("on", S.armed); $("bMistake").disabled = botC() < 0;
+  $("bMic").classList.toggle("rec", listening);
+  $("over").classList.toggle("on", S.over && !S.overClosed);
+  if (S.over) $("overTxt").textContent = overText();
+}
+function renderEditBoard() { view.render({ b: E.b, turn: E.turn, king: [-1, -1], inCheck: () => false }, { interactive: true, arrows: [], last: null }, false); }
+function persist() { try { localStorage.setItem("cg2game", JSON.stringify({ fen: game.startFen, mv: game.moves.map(e => e.uci) })); } catch (e) { } }
+function renderAll(noAnim) { if (S.edit) { renderEditBoard(); renderBubble(); renderToolbar(); return; } persist(); renderBoard(noAnim); renderBars(); renderEval(); renderCoach(); renderStats(); renderMoves(); renderToolbar(); }
+
+// ---------- ходы ----------
+function tryMove(from, to, promo) {
+  const c = game.pos.legalMoves().filter(m => m.from === from && m.to === to);
+  if (!c.length) return false;
+  if (c.length > 1 && !promo) { showPromo(from, to, c); return "promo"; }
+  const m = c.length > 1 ? c.find(x => x.promo === { q: 5, r: 4, b: 3, n: 2 }[promo]) || c[0] : c[0];
+  S.hold = false; applyMove(m); return true;
+}
+function showPromo(from, to, c) {
+  const col = c[0].piece >> 3, box = $("ppBtns"); box.innerHTML = "";
+  for (const t of [5, 4, 3, 2]) {
+    const b = document.createElement("button"); b.innerHTML = pieceIcon((col << 3) | t);
+    b.onclick = () => { $("promo").classList.remove("on"); tryMove(from, to, "qrbn"[[5, 4, 3, 2].indexOf(t)]); };
+    box.appendChild(b);
+  }
+  $("promo").classList.add("on");
+  view.clearSel();
+}
+function applyMove(m) {
+  const desc = describeMove(game.pos, m);
+  const e0 = game.play(m, desc); S.cur = null; S.overClosed = false;
+  S.over = game.status().over; feedback(m, e0.san);
+  renderAll(); afterChange();
+}
+const botTurn = () => !S.over && !S.hold && botC() >= 0 && game.pos.turn === botC();
+
+function accK() { // сколько вариантов считать: если точность выше цели — нужно больше «слабых, но выигрышных» ходов
+  const ms = game.moves.filter(e => e.by === botC() && e.acc != null);
+  if (!ms.length) return 6;
+  const mean = ms.reduce((s, e) => s + e.acc, 0) / ms.length;
+  return mean > cfg.tgt - 1 ? 30 : 12;
+}
+async function afterChange() {
+  const my = ++token; S.thinking = false; S.hint = false;
+  if (S.edit) return;
+  S.over = game.status().over;
+  if (S.over) { S.cur = null; renderAll(); archiveGame(); return; }
+  const key = game.pos.key(), isBot = botTurn(), K = isBot ? (S.armed ? 8 : cfg.lvl === "acc" ? accK() : kForElo(cfg.elo)) : 3;
+  let c = cache.get(key);
+  if (!c || c.K < K) {
+    S.thinking = true; S.cur = c || null; renderBars();
+    const r = await eng.analyze(game.pos.fen(), { timeMs: isBot ? 1000 : 800, multipv: K, depth: 8 });
+    if (my !== token) return;
+    S.thinking = false;
+    if (!r || !r.lines.length) { renderAll(); return; }
+    c = { lines: r.lines.slice().sort((a, b) => b.score - a.score), K, depth: r.depth }; cache.set(key, c);
+  }
+  S.cur = c; classifyLast(); renderAll();
+  if (isBot) await botMove(c.lines, my);
+}
+function classifyLast() {
+  const e = game.moves[game.moves.length - 1]; if (!e || e.cls || !S.cur) return;
+  const prev = cache.get(e.keyBefore); if (!prev) return;
+  const pb = prev.lines[0].score, after = -S.cur.lines[0].score;
+  const wb = winPct(pb), wa = winPct(after);
+  e.cls = classifyDrop(wb - wa, prev.lines[0].uci === e.uci); e.acc = moveAccuracy(wb, wa);
+  if (!e.bestSan && prev.lines[0].uci !== e.uci) { try { const p = new Position(e.fenBefore); e.bestSan = p.san(p.fromUci(prev.lines[0].uci), true); } catch (x) { } }
+}
+function spoken(m, san) {
+  if (m.flags & 4) return "короткая рокировка"; if (m.flags & 8) return "длинная рокировка";
+  let s = `${NOM[m.piece & 7]} ${FR[sqName(m.from)[0]]} ${RR[(m.from >> 4) + 1]} ${FR[sqName(m.to)[0]]} ${RR[(m.to >> 4) + 1]}`;
+  if (m.cap) s += ", со взятием"; if (m.promo) s += ", в " + ACC[m.promo];
+  if (/#$/.test(san)) s += ", мат"; else if (/\+$/.test(san)) s += ", шах";
+  return s;
+}
+async function botMove(lines, my) {
+  let res;
+  if (cfg.lvl === "acc" && !S.armed) {
+    const ms = game.moves.filter(e => e.by === botC() && e.acc != null), mean = ms.length ? ms.reduce((s, e) => s + e.acc, 0) / ms.length : cfg.tgt;
+    res = chooseTargetMove(lines, cfg.tgt, ms.length, mean, Math.random, game.moves.length);
+  } else res = chooseBotMove(lines, cfg.elo, Math.random, { mistake: S.armed });
+  const wasArmed = S.armed;
+  if (wasArmed) { S.armed = false; if (res.kind !== "mistake") toast("В этой позиции нечем «ошибиться» безопасно — сыграл лучший ход"); renderToolbar(); }
+  await sleep(300 + Math.random() * 350); if (my !== token) return;
+  const m = game.pos.fromUci(res.line.uci); if (!m) return;
+  const bestSan = res.kind === "mistake" ? game.pos.san(game.pos.fromUci(lines[0].uci), true) : null;
+  const desc = describeMove(game.pos, m), e = game.play(m, desc);
+  if (res.kind === "mistake") e.botMistake = { loss: res.loss, bestSan };
+  S.cur = null; S.over = game.status().over; renderAll(); feedback(m, e.san);
+  const sp = spoken(m, e.san); S.lastSpoken = sp;
+  say(sp + (cfg.speakWhy ? ". " + desc.join(", ") : ""));
+  afterChange();
+}
+function undo() {
+  if (!game.moves.length) return;
+  game.undo();
+  if (cfg.mode === "vs" && game.moves.length && game.pos.turn === botC()) game.undo();
+  S.hold = true; S.cur = null; S.over = false; renderAll(true); afterChange();
+}
+function redo() { if (!game.redo.length) return; game.redoMove(); if (cfg.mode === "vs" && game.redo.length && game.pos.turn === botC()) game.redoMove(); S.hold = true; S.cur = null; S.over = game.status().over; renderAll(); afterChange(); }
+function newGame(fen) {
+  archiveGame();
+  const odds = fen === undefined ? oddsStartFen() : undefined;
+  try { game.reset(fen !== undefined ? fen : odds); } catch (e) { toast("Некорректный FEN"); return; }
+  S.hold = false; S.over = false; S.overClosed = false; S.cur = null; S.armed = false; renderAll(true);
+  if (odds) toast("Фора: у стороны бота убрано " + ODDS_RU[cfg.odds], 4000);
+  afterChange();
+}
+
+// ---------- редактор позиции ----------
+const E = { b: null, turn: 0, bot: -1 };
+function buildPalette() {
+  [["palW", 0], ["palB", 1]].forEach(([id, col]) => {
+    const box = $(id); box.innerHTML = "";
+    [6, 5, 4, 3, 2, 1].forEach(t => { const b = document.createElement("button"); b.dataset.br = (col << 3) | t; b.innerHTML = pieceIcon((col << 3) | t); box.appendChild(b); });
+    const x = document.createElement("button"); x.dataset.br = col ? "move" : "0"; x.textContent = col ? "↖" : "✕"; x.title = col ? "Режим переноса" : "Ластик"; box.appendChild(x);
+  });
+  document.querySelectorAll(".pal button").forEach(b => b.onclick = () => {
+    const v = b.dataset.br === "move" ? null : +b.dataset.br;
+    view.brush = (view.brush === v || v === null) ? null : v; view.sel = -1; syncEdit(); haptic("select");
+  });
+}
+function syncEdit() {
+  document.querySelectorAll(".pal button").forEach(b => { const v = b.dataset.br === "move" ? null : +b.dataset.br; b.classList.toggle("on", view.brush !== null ? view.brush === v : b.dataset.br === "move"); });
+  document.querySelectorAll("#segTurn button").forEach(b => b.classList.toggle("on", +b.dataset.v === E.turn));
+  document.querySelectorAll("#segBot button").forEach(b => b.classList.toggle("on", +b.dataset.v === E.bot));
+}
+function openEdit() {
+  archiveGame();
+  ++token; S.thinking = false; S.edit = true; S.hint = false;
+  E.b = Array.from(game.pos.b); E.turn = game.pos.turn; E.bot = botC();
+  document.body.classList.add("editing"); view.edit = true; view.brush = null; view.sel = -1;
+  buildPalette(); syncEdit(); renderEditBoard(); renderBubble(); renderToolbar();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function exitEdit() { S.edit = false; document.body.classList.remove("editing"); view.edit = false; view.brush = null; view.sel = -1; }
+function cancelEdit() { exitEdit(); renderAll(true); afterChange(); }
+function editEvent(ev) {
+  if (!S.edit) return;
+  const badRank = s => (s >> 4) === 0 || (s >> 4) === 7;
+  if (ev.set != null) {
+    const c = ev.code;
+    if (c) {
+      if ((c & 7) === 1 && badRank(ev.set)) { toast("Пешка не может стоять на крайней горизонтали"); return; }
+      if ((c & 7) === 6) for (let s = 0; s < 128; s++) if (!(s & 8) && E.b[s] === c) E.b[s] = 0;
+      E.b[ev.set] = c;
+    } else E.b[ev.set] = 0;
+  } else if (ev.move) {
+    const [f, t] = ev.move, p = E.b[f];
+    if ((p & 7) === 1 && badRank(t)) { toast("Пешка не может стоять на крайней горизонтали"); renderEditBoard(); return; }
+    E.b[t] = p; E.b[f] = 0; haptic("move");
+  } else if (ev.remove != null) { E.b[ev.remove] = 0; haptic("move"); }
+  sound("move"); renderEditBoard();
+}
+function boardFen(b, turn) {
+  const rows = [];
+  for (let r = 7; r >= 0; r--) { let s = "", e = 0; for (let f = 0; f < 8; f++) { const p = b[r * 16 + f]; if (!p) { e++; continue; } if (e) { s += e; e = 0; } s += ((p >> 3) ? "pnbrqk" : "PNBRQK")[(p & 7) - 1]; } if (e) s += e; rows.push(s); }
+  let cs = "";
+  if (b[4] === 6) { if (b[7] === 4) cs += "K"; if (b[0] === 4) cs += "Q"; }
+  if (b[116] === 14) { if (b[119] === 12) cs += "k"; if (b[112] === 12) cs += "q"; }
+  return rows.join("/") + " " + (turn ? "b" : "w") + " " + (cs || "-") + " - 0 1";
+}
+const editFen = () => boardFen(E.b, E.turn);
+const ODDS = { none: "Без форы", pawn: "Пешка f", knight: "Конь b", bishop: "Слон c", rook: "Ладья a", queen: "Ферзь" };
+const ODDS_RU = { pawn: "пешки f", knight: "коня", bishop: "слона", rook: "ладьи", queen: "ферзя" };
+function oddsStartFen() {
+  if (cfg.odds === "none" || botC() < 0) return undefined;
+  const b = Array.from(new Position(START_FEN).b), c = botC();
+  const idx = cfg.odds === "pawn" ? (c ? 96 : 16) + 5 : (c ? 112 : 0) + { knight: 1, bishop: 2, rook: 0, queen: 3 }[cfg.odds];
+  b[idx] = 0; return boardFen(b, 0);
+}
+function finishEdit() {
+  const fen = editFen();
+  try { new Position(fen); } catch (e) { const m = String(e.message); toast(/no king/.test(m) ? "Нужны оба короля" : /illegal/.test(m) ? "Невозможная позиция: королю, который не ходит, стоит шах" : "Некорректная позиция"); haptic("check"); return; }
+  exitEdit();
+  if (E.bot === -1) cfg.mode = "free"; else { cfg.mode = "vs"; cfg.color = E.bot === 0 ? "b" : "w"; view.setFlipped(cfg.color === "b"); }
+  save(); syncSettings(); newGame(fen); haptic("capture");
+}
+document.querySelectorAll("#segTurn button").forEach(b => b.onclick = () => { E.turn = +b.dataset.v; syncEdit(); });
+document.querySelectorAll("#segBot button").forEach(b => b.onclick = () => { E.bot = +b.dataset.v; syncEdit(); });
+$("eClear").onclick = () => { E.b = new Array(128).fill(0); renderEditBoard(); };
+$("eStart").onclick = () => { E.b = Array.from(new Position(START_FEN).b); E.turn = 0; syncEdit(); renderEditBoard(); };
+$("eCur").onclick = () => { E.b = Array.from(game.pos.b); E.turn = game.pos.turn; syncEdit(); renderEditBoard(); };
+$("eCancel").onclick = cancelEdit; $("eGo").onclick = finishEdit;
+
+// ---------- голос ----------
+let ruVoices = [];
+const MALE_RE = /yuri|юрий|maxim|максим|dmitri|дмитр|pavel|павел|ivan|иван|aleks|алекс|male|муж/i, FEM_RE = /milena|милена|katya|катя|irina|ирина|anna|анна|alena|алена|elena|елена|female|жен|google/i;
+const vq = v => (/premium|премиум|enhanced|улучш|siri/i.test(v.name) ? 0 : 1);
+function loadVoices() {
+  ruVoices = ("speechSynthesis" in window ? speechSynthesis.getVoices() : []).filter(v => v.lang && /^ru/i.test(v.lang.replace("_", "-")));
+  ruVoices.sort((x, y) => (MALE_RE.test(y.name) - MALE_RE.test(x.name)) || (vq(x) - vq(y)) || x.name.localeCompare(y.name));
+  const sel = $("selVoice"); if (!sel) return;
+  sel.innerHTML = '<option value="">Авто: мужской, если есть</option>' + ruVoices.map(v => `<option value="${esc(v.voiceURI)}">${esc(v.name)}${MALE_RE.test(v.name) ? " (муж.)" : FEM_RE.test(v.name) ? " (жен.)" : ""}</option>`).join("");
+  sel.value = cfg.voice && ruVoices.some(v => v.voiceURI === cfg.voice) ? cfg.voice : "";
+  $("voiceNote").textContent = ruVoices.length ? `Найдено русских голосов: ${ruVoices.length}.` + (ruVoices.some(v => MALE_RE.test(v.name)) ? "" : " Мужского нет. Скачай «Yuri» в Настройки → Универсальный доступ → Устный контент → Голоса → Русский.") : "Русские голоса не найдены. Добавь в Настройки → Универсальный доступ → Устный контент → Голоса.";
+}
+function pickVoice() {
+  if (cfg.voice) { const v = ruVoices.find(v => v.voiceURI === cfg.voice); if (v) return v; }
+  return ruVoices.find(v => MALE_RE.test(v.name)) || ruVoices.find(v => !FEM_RE.test(v.name)) || ruVoices[0] || null;
+}
+if ("speechSynthesis" in window) { setTimeout(loadVoices, 0); speechSynthesis.onvoiceschanged = loadVoices; }
+function say(text) {
+  if (!cfg.speak || !("speechSynthesis" in window)) return Promise.resolve();
+  return new Promise(res => {
+    speaking = true; try { rec && rec.abort(); } catch (e) { }
+    const u = new SpeechSynthesisUtterance(text); u.lang = "ru-RU";
+    const v = pickVoice(); if (v) u.voice = v;
+    u.pitch = Math.max(.1, Math.min(2, cfg.pitch)); u.rate = Math.max(.5, Math.min(1.6, cfg.rate));
+    let done = false; const fin = () => { if (done) return; done = true; speaking = false; res(); startListening(); };
+    u.onend = fin; u.onerror = fin; setTimeout(fin, Math.max(2500, text.length * 120));
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  });
+}
+function interpretVoice(alts) {
+  const legal = game.pos.legalMoves(); let amb = null, chessy = false, wakeSeen = false;
+  for (const raw of alts) {
+    const w = stripWake(raw), s = w.text; wakeSeen = wakeSeen || w.wake;
+    const p = parseVoice(s); if (!p) continue;
+    if (p.type === "cmd") { if (w.wake) return { p, said: raw }; continue; }   // команды только со словом «бот»
+    if (cfg.wakeAll && !w.wake) continue;                                    // строгий режим: всё только после «бот»
+    if (p.type !== "castle" && !vChessy(s)) continue;                        // обычный разговор отсеиваем
+    chessy = true;
+    if (p.type === "castle") return { p, said: raw };
+    if (p.type === "move") { const c = legal.filter(m => m.from === sqFromName(p.from) && m.to === sqFromName(p.to)); if (c.length) return { mv: c[0], promo: p.promo, said: raw }; }
+    if (p.type === "dest") {
+      const to = sqFromName(p.to); let c = legal.filter(m => m.to === to && (!p.piece || (m.piece & 7) === p.piece));
+      if (!p.piece) { const pw = c.filter(m => (m.piece & 7) === 1); if (pw.length) c = pw; }
+      const froms = [...new Set(c.map(m => m.from))];
+      if (froms.length === 1) return { mv: c[0], promo: p.promo, said: raw };
+      if (froms.length > 1 && !amb) amb = { moves: c, said: raw };
+    }
+  }
+  if (amb) return { amb: amb.moves, said: amb.said };
+  let best = null;
+  for (const raw of alts) {
+    const w = stripWake(raw); if (cfg.wakeAll && !w.wake) continue;
+    if (!vChessy(w.text)) continue; chessy = true;
+    const r = fuzzyMove(w.text, legal); if (r && (!best || r.score < best.score)) best = r;
+  }
+  if (best && best.move) return { mv: best.move, said: alts[0], fuzzy: true };
+  if (best && best.ambiguous) return { amb: best.ambiguous, said: alts[0] };
+  return { none: true, chessy, said: alts[0] };
+}
+function handleVoice(text, alts) {
+  if (S.edit || S.reviewing) return;
+  alts = alts && alts.length ? alts : [text];
+  const log = $("voiceLog"); log.textContent = "Слышу: " + alts[0];
+  const r = interpretVoice(alts);
+  if (r.none && !r.chessy) { log.textContent = "Слышу: " + alts[0] + " — не ход, пропускаю"; return; }
+  if (r.p && r.p.type === "cmd") {
+    const n = r.p.name;
+    if (n === "undo") undo(); else if (n === "new") newGame(); else if (n === "repeat") say(S.lastSpoken || "ходов пока нет");
+    else if (n === "white" || n === "black") { cfg.color = n === "white" ? "w" : "b"; save(); syncSettings(); view.setFlipped(cfg.color === "b"); renderAll(true); afterChange(); }
+    else if (n === "quit") setListening(false);
+    else if (n === "hint") $("bHint").click();
+    else if (n === "eval") say(forecastText().replace("Прогноз: ", "").replace(/%/g, " процентов"));
+    else if (n === "mistake") { S.armed = true; renderToolbar(); toast("Следующий ход бота будет с лёгкой ошибкой"); say("Хорошо, зазеваюсь"); if (botTurn()) afterChange(); }
+    else if (n === "flip") $("bFlip").click();
+    return;
+  }
+  if (botTurn()) { toast("Сейчас ходит бот"); return; }
+  if (r.p && r.p.type === "castle") { const m = game.pos.legalMoves().find(x => x.flags & (r.p.side === "short" ? 4 : 8)); if (m) { S.hold = false; applyMove(m); } else say("Рокировка невозможна"); return; }
+  if (r.mv) { const ok = tryMove(r.mv.from, r.mv.to, r.promo || "q"); if (ok === false) say("Нелегальный ход, повтори"); else say("Принято" + (r.fuzzy ? ": " + spoken(r.mv, game.moves.length ? game.moves[game.moves.length - 1].san : "") : "")); return; }
+  if (r.amb) { const fr = [...new Set(r.amb.map(m => sqName(m.from)))].slice(0, 3).map(s => FR[s[0]] + " " + RR[+s[1]]).join(" или "); say("Уточни, откуда ходишь: " + fr); return; }
+  say("Не расслышал, повтори ход");
+}
+function startListening() {
+  if (!listening || speaking) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast("В этом браузере нет распознавания речи — двигай фигуры пальцем"); listening = false; renderToolbar(); return; }
+  try { rec && rec.abort(); } catch (e) { }
+  rec = new SR(); rec.lang = "ru-RU"; rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 10;
+  rec.onresult = e => {
+    const r = e.results[e.results.length - 1], alts = [...r].map(a => a.transcript);
+    handleVoice(alts[0], alts);
+  };
+  rec.onend = () => { if (listening && !speaking) setTimeout(startListening, 150); };
+  rec.onerror = e => { if (e.error === "not-allowed") { listening = false; renderToolbar(); toast("Разреши микрофон в настройках браузера"); } };
+  try { rec.start(); } catch (e) { }
+}
+function setListening(v) { listening = v; renderToolbar(); if (v) startListening(); else { try { rec && rec.abort(); } catch (e) { } } }
+
+// ---------- элементы управления ----------
+const PRESETS = [[600, "Новичок"], [1000, "Любитель"], [1500, "Средний"], [2000, "Сильный"], [2500, "Мастер"], [3000, "Максимум"]];
+function syncSettings() {
+  $("elo").value = cfg.elo; $("eloVal").textContent = cfg.elo; $("eloLbl").textContent = eloLabel(cfg.elo);
+  $("selMode").value = cfg.mode; $("segLvl").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === cfg.lvl)); $("lvlElo").style.display = cfg.lvl === "elo" ? "" : "none"; $("lvlAcc").style.display = cfg.lvl === "acc" ? "" : "none"; $("tgt").value = cfg.tgt; $("tgtVal").textContent = cfg.tgt + "%"; $("tgtPresets").querySelectorAll(".pill").forEach(b => b.classList.toggle("on", +b.dataset.v === cfg.tgt)); $("selOdds").value = cfg.odds; $("pitch").value = cfg.pitch; $("rate").value = cfg.rate; $("selColor").value = cfg.color; $("chkSpeak").checked = cfg.speak; $("chkWhy").checked = cfg.speakWhy; $("chkWake").checked = cfg.wakeAll; $("chkHap").checked = cfg.haptic; $("chkSnd").checked = cfg.sound;
+  $("presets").querySelectorAll(".pill").forEach((b, i) => b.classList.toggle("on", Math.abs(PRESETS[i][0] - cfg.elo) < 125));
+  $("layers").querySelectorAll(".pill").forEach(b => b.classList.toggle("on", !!cfg.layers[b.dataset.k]));
+}
+$("segLvl").querySelectorAll("button").forEach(b => b.onclick = () => { cfg.lvl = b.dataset.v; save(); syncSettings(); renderBars(); });
+[60, 71, 80, 90, 97].forEach(v => { const b = document.createElement("button"); b.className = "pill"; b.dataset.v = v; b.textContent = v + "%"; b.onclick = () => { cfg.tgt = v; save(); syncSettings(); renderBars(); }; $("tgtPresets").appendChild(b); });
+$("tgt").oninput = e => { cfg.tgt = +e.target.value; $("tgtVal").textContent = cfg.tgt + "%"; };
+$("tgt").onchange = () => { save(); syncSettings(); renderBars(); };
+Object.entries(ODDS).forEach(([k, t]) => { const o = document.createElement("option"); o.value = k; o.textContent = t; $("selOdds").appendChild(o); });
+$("selOdds").onchange = e => { cfg.odds = e.target.value; save(); toast(cfg.odds === "none" ? "Фора выключена" : "Фора применится в новой партии", 3000); };
+$("selVoice").onchange = e => { cfg.voice = e.target.value; save(); };
+$("pitch").oninput = e => { cfg.pitch = +e.target.value; };
+$("pitch").onchange = () => save(); $("rate").oninput = e => { cfg.rate = +e.target.value; }; $("rate").onchange = () => save();
+PRESETS.forEach(([v, t]) => { const b = document.createElement("button"); b.className = "pill"; b.textContent = t + " · " + v; b.onclick = () => { cfg.elo = v; save(); syncSettings(); renderBars(); }; $("presets").appendChild(b); });
+[["best", "Лучший ход", "#4f9a3c"], ["plans", "План бота / соперника", "#2f6fc4"], ["threatsMe", "Мне угрожают", "#c8372d"], ["myThreats", "Я угрожаю", "#1f8fa0"]].forEach(([k, t, c]) => {
+  const b = document.createElement("button"); b.className = "pill lay"; b.dataset.k = k; b.style.setProperty("--c", c); b.textContent = t;
+  b.onclick = () => { cfg.layers[k] = !cfg.layers[k]; save(); syncSettings(); renderBoard(); }; $("layers").appendChild(b);
+});
+$("elo").oninput = e => { cfg.elo = +e.target.value; $("eloVal").textContent = cfg.elo; $("eloLbl").textContent = eloLabel(cfg.elo); syncSettings(); };
+$("elo").onchange = () => { save(); renderBars(); };
+$("selMode").onchange = e => { cfg.mode = e.target.value; save(); S.hold = false; renderAll(); afterChange(); };
+$("selColor").onchange = e => { cfg.color = e.target.value; save(); view.setFlipped(cfg.color === "b"); S.hold = false; renderAll(true); afterChange(); };
+$("chkSpeak").onchange = e => { cfg.speak = e.target.checked; save(); };
+$("chkWhy").onchange = e => { cfg.speakWhy = e.target.checked; save(); };
+$("chkWake").onchange = e => { cfg.wakeAll = e.target.checked; save(); };
+$("chkHap").onchange = e => { cfg.haptic = e.target.checked; save(); if (cfg.haptic) haptic("capture"); };
+$("chkSnd").onchange = e => { cfg.sound = e.target.checked; save(); sound("capture"); };
+$("bUndo").onclick = undo; $("bRedo").onclick = redo;
+$("bSet").onclick = () => $("settings").scrollIntoView({ behavior: "smooth", block: "start" });
+$("bubble").onclick = () => $("coach").scrollIntoView({ behavior: "smooth", block: "center" });
+$("bHint").onclick = () => {
+  if (S.over || S.edit) return;
+  if (!S.cur) { toast("Подожди секунду, анализирую…"); return; }
+  const m = game.pos.fromUci(S.cur.lines[0].uci); if (!m) return;
+  const san = game.pos.san(m, true); S.hint = true; renderBoard(); haptic("select");
+  toast("Лучший ход: " + san + " — " + describeMove(game.pos, m).join(", "), 5000);
+  say("Подсказка: " + spoken(m, san));
+};
+$("bEdit").onclick = () => S.edit ? cancelEdit() : openEdit();
+$("bFlip").onclick = () => { view.setFlipped(!view.flipped); renderBars(); renderEval(); };
+$("bNew").onclick = () => newGame();
+$("bMic").onclick = () => setListening(!listening);
+$("bMistake").onclick = () => { S.armed = !S.armed; renderToolbar(); toast(S.armed ? "Следующий ход бота будет с лёгкой ошибкой" : "Ошибка отменена"); if (S.armed && botTurn()) afterChange(); };
+$("overNew").onclick = () => newGame(); $("overClose").onclick = () => { S.overClosed = true; renderToolbar(); };
+$("bLoad").onclick = () => { const f = $("fen").value.trim(); if (f) newGame(f); };
+$("bCopyFen").onclick = () => copy(game.pos.fen()); $("bCopyPgn").onclick = () => copy(game.pgn());
+$("bVoiceTest").onclick = () => { const n = "speechSynthesis" in window ? speechSynthesis.getVoices() : [], ru = n.filter(v => v.lang && v.lang.startsWith("ru")).length; $("voiceLog").textContent = `Голосов: ${n.length}, русских: ${ru}. Если звука нет — включи звук (боковой переключатель) и открой страницу в Safari.`; const was = cfg.speak; cfg.speak = true; say("Проверка звука. Раз, два, три").then(() => { cfg.speak = was; }); };
+function copy(t) { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("Скопировано"), () => { $("fen").value = t; toast("Скопируй из поля «FEN»"); }); }
+
+
+// ===== review.js: история партий и разбор =====
+const HKEY = "cg2hist";
+const getHist = () => { try { return JSON.parse(localStorage.getItem(HKEY) || "[]"); } catch (e) { return []; } };
+function archiveGame() {
+  if (game.moves.length < 4) return;
+  const mv = game.moves.map(e => e.uci), sig = game.startFen + "|" + mv.join(" ");
+  if (S.archived === sig) return; S.archived = sig;
+  const st = game.status(), h = getHist();
+  h.unshift({ t: Date.now(), fen: game.startFen, mv, me: cfg.mode === "free" ? -1 : myC(), mode: cfg.mode, elo: cfg.elo, res: st.over ? (st.result === "mate" ? (st.winner ? "0-1" : "1-0") : "1/2-1/2") : "*" });
+  h.length = Math.min(h.length, 30);
+  try { localStorage.setItem(HKEY, JSON.stringify(h)); } catch (e) { }
+  renderHist();
+}
+function renderHist() {
+  const h = getHist(), box = $("hist");
+  if (!h.length) { box.innerHTML = '<span class="small">Пока пусто. Сыграй партию — она сохранится здесь, и её можно будет разобрать.</span>'; return; }
+  box.innerHTML = "";
+  h.forEach(g => {
+    const row = document.createElement("div"); row.className = "hrow"; const d = new Date(g.t);
+    const res = g.res === "1-0" ? "1–0" : g.res === "0-1" ? "0–1" : g.res === "*" ? "не закончена" : "½–½";
+    row.innerHTML = `<span><b>${res}</b> · ${g.mv.length} ход. · ELO ${g.elo}<br><span class="small">${d.toLocaleDateString("ru-RU")} ${d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</span></span>`;
+    const b = document.createElement("button"); b.className = "pill"; b.textContent = "Разбор"; b.onclick = () => openReview(g); row.appendChild(b); box.appendChild(row);
+  });
+}
+
+const R = { open: false, run: 0, g: null, poses: [], keys: [], idx: 0, me: -1 };
+let rview = null;
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const nm = c => R.me < 0 ? (c ? "Чёрные" : "Белые") : (c === R.me ? "Ты" : "Соперник");
+const mine = c => R.me < 0 || c === R.me;
+
+function openReview(src) {
+  ++token; S.thinking = false; S.reviewing = true;
+  R.me = src.me; R.g = new Game(); R.g.reset(src.fen); R.poses = [R.g.pos.clone()];
+  for (const u of src.mv) { const m = R.g.pos.fromUci(u); if (!m) break; R.g.play(m, describeMove(R.g.pos, m)); R.poses.push(R.g.pos.clone()); }
+  R.keys = R.poses.map(p => p.key()); R.idx = 0; R.open = true; const my = ++R.run;
+  if (!rview) rview = new BoardView($("rvBoard"), {});
+  rview.setFlipped(R.me === 1);
+  $("over").classList.remove("on");
+  $("review").classList.add("on"); document.body.classList.add("noscroll"); $("review").scrollTop = 0;
+  renderReview(); analyzeAll(my);
+}
+function closeReview() {
+  R.open = false; ++R.run; S.reviewing = false;
+  $("review").classList.remove("on"); document.body.classList.remove("noscroll");
+  renderAll(true); afterChange();
+}
+async function analyzeAll(my) {
+  const need = [];
+  for (let i = 0; i < R.poses.length; i++) if (!R.poses[i].status(1).over && !cache.get(R.keys[i])) need.push(i);
+  for (let k = 0; k < need.length; k++) {
+    if (!R.open || my !== R.run) return;
+    $("rvProg").textContent = `Анализирую позиции: ${k + 1} из ${need.length}…`;
+    const i = need[k], r = await eng.analyze(R.poses[i].fen(), { timeMs: 450, multipv: 1, depth: 10 });
+    if (!R.open || my !== R.run) return;
+    if (r && r.lines.length) cache.set(R.keys[i], { lines: r.lines.slice().sort((a, b) => b.score - a.score), K: 1, depth: r.depth });
+    if (k % 2 === 1 || k === need.length - 1) renderReview();
+  }
+  if (R.open && my === R.run) { $("rvProg").textContent = ""; renderReview(); }
+}
+// оценка позиции i с точки зрения белых (или null, пока не посчитана)
+function wScore(i) {
+  const p = R.poses[i], st = p.status(1);
+  if (st.over) return st.result === "mate" ? (p.turn === 0 ? -30000 : 30000) : 0;
+  const c = cache.get(R.keys[i]); if (!c) return null;
+  return p.turn === 0 ? c.lines[0].score : -c.lines[0].score;
+}
+const dCache = new Map();
+function dOf(i) {
+  const e = R.g.moves[i], a = wScore(i), b = wScore(i + 1); if (!e || a == null || b == null) return null;
+  const sg = e.by === 0 ? 1 : -1, before = a * sg, after = b * sg, c0 = cache.get(R.keys[i]);
+  const bestUci = c0 ? c0.lines[0].uci : null, wb = winPct(before), wa = winPct(after);
+  return { e, by: e.by, before, after, bestUci, cls: classifyDrop(wb - wa, bestUci === e.uci), acc: moveAccuracy(wb, wa), drop: wb - wa, wBefore: a, wAfter: b };
+}
+const BAD = ["inacc", "mistake", "blunder"];
+const newHang = (p0, p1, color) => { const had = new Set(hanging(p0, color).map(x => x.sq)); return hanging(p1, color).filter(x => !had.has(x.sq)); };
+const resText = st => st.result === "mate" ? "Мат. Победили " + (st.winner ? "чёрные" : "белые") + "." : st.result === "stalemate" ? "Пат — ничья." : "Ничья.";
+const moveNo = i => { const s = R.g.startTurn + i; return R.g.startFull + Math.floor(s / 2) + (s % 2 ? "…" : "."); };
+
+function explain(i) {
+  const n = R.g.moves.length;
+  if (i >= n) { const st = R.poses[i].status(1); return `<p><b>Конец записи.</b> ${st.over ? esc(resText(st)) : "Партия не была закончена."}</p>`; }
+  const e = R.g.moves[i], p0 = R.poses[i], m = p0.fromUci(e.uci), d = dOf(i);
+  let h = `<p><b>${esc(nm(e.by))}: ${moveNo(i)} ${esc(e.san)}</b>`;
+  if (!d) return h + `</p><p>${esc(cap(e.desc.join(", ")))}.</p><p class="k">Оценка ещё считается…</p>`;
+  h += ` <span class="badge ${d.cls.id}">${d.cls.icon} ${d.cls.ru}</span></p><p>${esc(cap(e.desc.join(", ")))}.</p>`;
+  h += `<p class="k">Оценка позиции: ${evalText(d.wBefore).short} → ${evalText(d.wAfter).short}</p>`;
+  if (BAD.includes(d.cls.id)) {
+    const bm = d.bestUci ? p0.fromUci(d.bestUci) : null;
+    if (bm) {
+      const mateN = d.before >= 29000 ? Math.max(1, Math.ceil((30000 - d.before) / 2)) : 0, bs = p0.san(bm, true);
+      h += mateN ? `<p>🎯 Здесь был <b>мат в ${mateN}</b>: <b>${esc(bs)}</b>.</p>` : `<p>Лучше было <b>${esc(bs)}</b> — ${esc(describeMove(p0, bm).join(", "))}.</p>`;
+    }
+    const p1 = R.poses[i + 1], nh = newHang(p0, p1, e.by);
+    if (nh.length) h += `<p>⚠️ После хода под боем: ${nh.slice(0, 2).map(x => `${pr(x.color, x.type, "nom")} ${sqName(x.sq)}${x.defended ? "" : " (без защиты)"}`).join("; ")}.</p>`;
+    const c1 = cache.get(R.keys[i + 1]);
+    if (d.drop > 10 && c1 && !p1.status(1).over) { const rm = p1.fromUci(c1.lines[0].uci); if (rm) h += `<p>Сильнейший ответ: <b>${esc(p1.san(rm, true))}</b> — ${esc(describeMove(p1, rm).join(", "))}.</p>`; }
+  } else if (d.cls.id === "best") h += `<p class="k">Лучший ход в этой позиции.</p>`;
+  return h;
+}
+function keyMoments() {
+  const out = [];
+  for (let i = 0; i < R.g.moves.length; i++) { const d = dOf(i); if (!d) continue; if (["mistake", "blunder"].includes(d.cls.id) || (mine(d.by) && d.cls.id === "inacc")) out.push({ i, d }); }
+  return out;
+}
+function nonPawn(p) { let c = 0; for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) { const t = p.b[r * 16 + f] & 7; if (t >= 2 && t <= 5) c++; } return c; }
+function tips() {
+  const out = [], n = R.g.moves.length;
+  let hang = 0, miss = 0, opening = 0, endg = 0, bl = 0, mi = 0, chances = 0, peak = -1e9, cnt = 0, sum = 0, got = 0;
+  for (let i = 0; i < n; i++) {
+    const d = dOf(i); if (!d) continue; got++;
+    if (!mine(d.by)) { if (["mistake", "blunder"].includes(d.cls.id)) { const d2 = dOf(i + 1); if (d2 && mine(d2.by) && d2.acc < 85) chances++; } continue; }
+    cnt++; sum += d.acc; peak = Math.max(peak, d.before);
+    if (d.cls.id === "blunder") bl++; if (d.cls.id === "mistake") mi++;
+    if (["mistake", "blunder"].includes(d.cls.id)) {
+      if (i < 20) opening++; if (nonPawn(R.poses[i]) <= 4) endg++;
+      if (newHang(R.poses[i], R.poses[i + 1], d.by).length) hang++;
+      if (d.before >= 29000) miss++;
+    }
+  }
+  if (got < n) out.push("Анализ ещё идёт — советы станут точнее, когда все позиции будут посчитаны.");
+  if (!cnt) return out.length ? out : ["Недостаточно ходов для советов."];
+  const avg = sum / cnt, last = wScore(n), fin = last == null ? null : last * (R.me === 1 ? -1 : 1);
+  if (hang) out.push(`Зевки фигур (${hang}×). Перед каждым ходом смотри на красные стрелки: не остаётся ли твоя фигура под боем без защиты и не убираешь ли ты защитника.`);
+  if (miss) out.push(`Пропущен мат (${miss}×). Перед ходом проверяй все шахи и взятия: самый короткий путь к победе часто идёт через них.`);
+  if (R.me >= 0 && peak >= 250 && fin != null && fin < 50) out.push("У тебя было заметное преимущество, но партия его не удержала. В выигранной позиции меняй фигуры и не усложняй игру.");
+  if (opening) out.push(`Ошибки в дебюте (${opening}×). Развивай коней и слонов, занимай центр, рокируйся, не ходи одной фигурой дважды без причины.`);
+  if (endg) out.push(`Ошибки в эндшпиле (${endg}×). Считай варианты точнее, активизируй короля, торопи проходные пешки.`);
+  if (chances) out.push(`Упущенные шансы (${chances}×). Соперник ошибался, но ты не всегда находил сильнейший ответ. Ищи, что он оставил без защиты (бирюзовые стрелки).`);
+  if (bl + mi >= 3 && avg < 65) out.push("Много грубых ошибок подряд. Играй медленнее и снизь ELO бота, пока не войдёт в привычку проверять угрозы.");
+  if (!bl && !mi && cnt >= 5) out.push(`Чистая партия: точность ${Math.round(avg)}%, ни ошибок, ни зевков. Можно поднимать ELO бота.`);
+  if (!out.length || (out.length === 1 && got < n)) out.push("Системных проблем не видно: только мелкие неточности. Продолжай играть и разбирать партии.");
+  return out;
+}
+function rvGraph() {
+  const n = R.g.moves.length; let d = [], prev = 50;
+  for (let i = 0; i <= n; i++) { const w = wScore(i); if (w != null) prev = winPct(w); d.push(prev); }
+  const X = i => n ? i / n * 100 : 0, Y = w => 38 - w * .36;
+  let s = `<line x1="0" x2="100" y1="20" y2="20" stroke="#4a3a2a" stroke-width=".5" stroke-dasharray="2 2"/>`;
+  s += `<polyline points="${d.map((w, i) => X(i).toFixed(1) + "," + Y(w).toFixed(1)).join(" ")}" fill="none" stroke="#c9a45c" stroke-width="1.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+  for (let i = 0; i < n; i++) { const x = dOf(i); if (x && ["mistake", "blunder"].includes(x.cls.id)) s += `<circle cx="${X(i + 1).toFixed(1)}" cy="${Y(d[i + 1]).toFixed(1)}" r="1.5" fill="${x.cls.id === "blunder" ? "#c8372d" : "#e0841f"}"/>`; }
+  s += `<line x1="${X(R.idx).toFixed(1)}" x2="${X(R.idx).toFixed(1)}" y1="0" y2="40" stroke="#efe6d4" stroke-width=".6" vector-effect="non-scaling-stroke"/>`;
+  $("rvGraph").innerHTML = s;
+}
+function renderReview() {
+  if (!R.open) return;
+  const n = R.g.moves.length, i = R.idx, p = R.poses[i], arrows = [];
+  const last = i > 0 ? [R.g.moves[i - 1].m.from, R.g.moves[i - 1].m.to] : null;
+  if (i < n) {
+    const d = dOf(i), e = R.g.moves[i], bad = d && BAD.includes(d.cls.id);
+    if (bad && d.bestUci) { const bm = p.fromUci(d.bestUci); if (bm) arrows.push({ from: bm.from, to: bm.to, color: "#4f9a3c", w: .17, o: .9 }); }
+    arrows.push({ from: e.m.from, to: e.m.to, color: bad ? "#c8372d" : "#d9a441", w: .13, o: .85 });
+  }
+  rview.render(p, { last, arrows, interactive: false }, false);
+  $("rvPos").textContent = `позиция ${i} из ${n}`;
+  $("rvFirst").disabled = $("rvPrev").disabled = i === 0; $("rvNext").disabled = $("rvLast").disabled = i === n;
+  $("rvMove").innerHTML = explain(i);
+  rvGraph();
+  const st = side => { let a = 0, c = 0, q = { inacc: 0, mistake: 0, blunder: 0 }; for (let k = 0; k < n; k++) { const d = dOf(k); if (!d || d.by !== side) continue; a += d.acc; c++; if (q[d.cls.id] != null) q[d.cls.id]++; }
+    const acc = c ? a / c : null; return `<div><small>${esc(nm(side))}</small><b>${acc == null ? "—" : Math.round(acc) + "%"}</b><small>${acc == null ? "нет данных" : verdict(acc)}</small><small>неточн. ${q.inacc} · ошибок ${q.mistake} · зевков ${q.blunder}</small><div class="bar"><i style="width:${acc == null ? 0 : acc}%"></i></div></div>`; };
+  const my = R.me < 0 ? 0 : R.me; $("rvStats").innerHTML = st(my) + st(my ^ 1);
+  const km = keyMoments(); $("rvKey").innerHTML = "";
+  if (!km.length) $("rvKey").innerHTML = '<span class="small">Грубых ошибок не найдено.</span>';
+  km.forEach(({ i: k, d }) => {
+    const b = document.createElement("button"); b.className = "kmoment" + (k === R.idx ? " on" : "");
+    const p0 = R.poses[k], bm = d.bestUci ? p0.fromUci(d.bestUci) : null;
+    b.innerHTML = `<b>${moveNo(k)} ${esc(d.e.san)}</b> <span class="badge ${d.cls.id}">${d.cls.icon} ${d.cls.ru}</span><span class="small"> ${esc(nm(d.by))}${bm ? " · лучше " + esc(p0.san(bm, true)) : ""}</span>`;
+    b.onclick = () => { R.idx = k; renderReview(); $("rvBoard").scrollIntoView({ behavior: "smooth", block: "center" }); };
+    $("rvKey").appendChild(b);
+  });
+  $("rvTips").innerHTML = tips().map(t => `<p>• ${esc(t)}</p>`).join("");
+}
+$("rvFirst").onclick = () => { R.idx = 0; renderReview(); };
+$("rvPrev").onclick = () => { R.idx = Math.max(0, R.idx - 1); renderReview(); };
+$("rvNext").onclick = () => { R.idx = Math.min(R.g.moves.length, R.idx + 1); renderReview(); };
+$("rvLast").onclick = () => { R.idx = R.g.moves.length; renderReview(); };
+$("rvClose").onclick = closeReview;
+$("rvGraph").onclick = e => { const rc = e.currentTarget.getBoundingClientRect(); R.idx = Math.round((e.clientX - rc.left) / rc.width * R.g.moves.length); renderReview(); };
+const startReview = () => { if (game.moves.length < 2) { toast("Сыграй хотя бы пару ходов"); return; } openReview({ fen: game.startFen, mv: game.moves.map(e => e.uci), me: cfg.mode === "free" ? -1 : myC() }); };
+$("bReview").onclick = startReview; $("overReview").onclick = startReview;
+
+try {
+  const sv = JSON.parse(localStorage.getItem("cg2game") || "null");
+  if (sv && sv.fen && sv.mv && sv.mv.length) {
+    game.reset(sv.fen);
+    for (const u of sv.mv) { const m = game.pos.fromUci(u); if (!m) break; game.play(m, describeMove(game.pos, m)); }
+    S.over = game.status().over; S.overClosed = true;
+  }
+} catch (e) { game.reset(); }
+syncSettings();
+renderAll(true);
+afterChange();
+renderHist();
+window.__cg = { handleVoice, interpretVoice, oddsStartFen, E, openReview, R, openEdit, finishEdit, editEvent, haptic, game, cfg, S, view, eng, cache, tryMove, applyMove, newGame, undo, redo, afterChange };
+</script>
+</body>
+</html>
